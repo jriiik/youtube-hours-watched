@@ -60,6 +60,14 @@ describe("parseJsonHistory", () => {
     expect(parseJsonHistory(JSON.stringify(items)).entries.map((e) => e.title)).toEqual(items.map((_, i) => `Vidéo ${i}`));
   });
 
+  it("recognises ads in Japanese histories, where Google Ads is Google 広告", () => {
+    const items = [
+      { header: "YouTube", title: "広告を視聴しました", titleUrl: `https://www.youtube.com/watch?v=${fakeId(1)}`, time: "2026-10-30T10:00:00Z", details: [{ name: "Google 広告から" }] },
+      jsonEntry({ videoId: fakeId(2), time: "2026-10-30T09:00:00Z" }),
+    ];
+    expect(parseJsonHistory(JSON.stringify(items))).toMatchObject({ entries: [{ videoId: fakeId(2) }], skipped: { ads: 1 } });
+  });
+
   it("refuses files that are not a history", () => {
     expect(() => parseJsonHistory("{not json")).toThrow(AnalysisError);
     expect(() => parseJsonHistory('{"a": 1}')).toThrow(AnalysisError);

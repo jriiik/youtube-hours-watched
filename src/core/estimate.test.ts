@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estimateEntries, sortByTime } from "./estimate";
+import { estimateEntries, historyInTimeOrder, sortByTime } from "./estimate";
 import type { VideoInfo } from "./estimate";
 import type { WatchEntry } from "./history";
 
@@ -52,15 +52,19 @@ describe("estimateEntries", () => {
       [7200, 7200], // watched to the end before, so this is a rewatch
       [60, 60],
     ]);
+    expect(out.map((e) => e.resumed ?? false)).toEqual([false, false, true, false, false, false]);
   });
 
-  it("counts at most 12 hours of a video in the upper bound", () => {
-    // A month-long recording of a 24/7 stream, opened for half an hour.
-    const entries = [at("stream", 0), at("x", 1800), at("x", 1900)];
+  it("counts at most 12 hours of a video, in both numbers", () => {
+    // A month-long recording of a 24/7 stream: opened for half an hour, then before a
+    // four-day break, then as the newest entry.
+    const entries = [at("stream", 0), at("x", 1800), at("stream", 2 * DAY), at("x", 6 * DAY), at("stream", 7 * DAY)];
     expect(pick(estimateEntries(entries, lengths({ stream: 30 * DAY, x: 100 })))).toEqual([
       [1800, 12 * 3600],
       [100, 100],
+      [12 * 3600 - 1800, 0], // resumed: the rest of its 12 hours
       [100, 100],
+      [12 * 3600, 12 * 3600], // 12 hours counted already: a rewatch, also at most 12 hours
     ]);
   });
 
@@ -97,5 +101,13 @@ describe("sortByTime", () => {
   it("sorts oldest first and keeps the file order of entries with the same time", () => {
     const sorted = sortByTime([at("c", 10), at("a", 5), at("b1", 7), at("b2", 7), at("b3", 7)]);
     expect(sorted.map((e) => e.videoId)).toEqual(["a", "b1", "b2", "b3", "c"]);
+  });
+});
+
+describe("historyInTimeOrder", () => {
+  it("puts entries in the same second in reverse file order, since Takeout lists the newest first", () => {
+    // In the file: c (newest), then b2 and b1 in the same second (b2 is the newer), then a.
+    const sorted = historyInTimeOrder([at("c", 10), at("b2", 7), at("b1", 7), at("a", 5)]);
+    expect(sorted.map((e) => e.videoId)).toEqual(["a", "b1", "b2", "c"]);
   });
 });

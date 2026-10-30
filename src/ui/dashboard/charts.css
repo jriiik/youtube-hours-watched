@@ -376,3 +376,20 @@
   margin-top: 2px;
   color: var(--accent);
 }
+
+/* Windows contrast themes replace background colours, which is all the chart marks are made
+   of: keep their own colours, and outline the hovered cell with a system colour. */
+@media (forced-colors: active) {
+  .mc__ub,
+  .mc__est,
+  .hm__cell,
+  .hm-legend__swatch,
+  .legend__swatch,
+  .tip-row__swatch {
+    forced-color-adjust: none;
+  }
+
+  .hm__ring {
+    outline: 2px solid Highlight;
+  }
+}

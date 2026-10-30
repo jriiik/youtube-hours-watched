@@ -44,7 +44,10 @@ export interface FetchedVideo {
   missing: boolean;
 }
 
-export type FetchLike = (url: string, init: { headers: Record<string, string>; signal: AbortSignal }) => Promise<Response>;
+export type FetchLike = (
+  url: string,
+  init: { headers: Record<string, string>; signal: AbortSignal; cache: RequestCache },
+) => Promise<Response>;
 
 export interface ApiOptions {
   /** "" sends no key header (the cloud dev sandbox's proxy adds one). */
@@ -77,10 +80,15 @@ const MESSAGES: Record<Exclude<ApiKeyProblem, "unknown">, string> = {
   "wrong-api":
     "This key isn't allowed to use the YouTube Data API v3. In the Google Cloud console, add YouTube Data API v3 to the key's API restrictions.",
   "referrer-blocked":
-    "This key only works on certain websites, so this app can't use it. In the Google Cloud console, set the key's application restriction to None.",
+    "This key's application restrictions (websites, IP addresses or apps) block this app. In the Google Cloud console, set the key's application restriction to None.",
   quota: "This key has used up today's YouTube API quota. It resets at midnight Pacific Time.",
   network: "Couldn't reach YouTube. Check your internet connection and try again.",
 };
+
+/** API keys are plain ASCII; anything else can't even be sent in a header. */
+const KEY_CHARS = /^[\x21-\x7e]*$/;
+const BAD_KEY_CHARS =
+  "This API key has a character that can't be part of a key, such as a dash or quote mark added while copying. Copy the key again from the Google Cloud console.";
 
 interface GoogleErrorBody {
   error?: {
@@ -106,7 +114,9 @@ export function explainApiError(status: number, body: unknown, hasKey = true): {
   if (has("API_KEY_INVALID", "keyInvalid")) reason = "invalid";
   else if (has("SERVICE_DISABLED", "accessNotConfigured")) reason = "api-not-enabled";
   else if (has("API_KEY_SERVICE_BLOCKED")) reason = "wrong-api";
-  else if (has("API_KEY_HTTP_REFERRER_BLOCKED")) reason = "referrer-blocked";
+  else if (has("API_KEY_HTTP_REFERRER_BLOCKED", "API_KEY_IP_ADDRESS_BLOCKED", "API_KEY_ANDROID_APP_BLOCKED", "API_KEY_IOS_APP_BLOCKED")) {
+    reason = "referrer-blocked";
+  }
   else if (has("quotaExceeded", "dailyLimitExceeded")) reason = "quota";
   if (reason !== "unknown") return { reason, message: MESSAGES[reason] };
   if (!hasKey && (status === 401 || status === 403)) {
@@ -133,6 +143,9 @@ export function videosUrl(ids: readonly string[]): string {
 
 /** One GET with a timeout; network failures and timeouts reject with YouTubeApiError("network"). */
 async function getOnce(url: string, opts: ApiOptions): Promise<{ status: number; body: unknown }> {
+  // fetch would reject such a key before sending anything, which looks like a network error.
+  if (!KEY_CHARS.test(opts.apiKey)) throw new YouTubeApiError("invalid", BAD_KEY_CHARS);
+  if (opts.signal?.aborted) throw abortError(opts.signal);
   const fetchImpl: FetchLike = opts.fetch ?? ((u, init) => fetch(u, init));
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
@@ -140,7 +153,9 @@ async function getOnce(url: string, opts: ApiOptions): Promise<{ status: number;
   opts.signal?.addEventListener("abort", onAbort, { once: true });
   try {
     const headers: Record<string, string> = opts.apiKey ? { "X-Goog-Api-Key": opts.apiKey } : {};
-    const res = await fetchImpl(url, { headers, signal: ctrl.signal });
+    // no-store: otherwise WebView2 keeps every reply on disk, keyed by its URL, which lists
+    // watched video IDs, past the 30 days the app may keep them and after Clear saved lengths.
+    const res = await fetchImpl(url, { headers, signal: ctrl.signal, cache: "no-store" });
     let body: unknown = null;
     try {
       body = await res.json();
@@ -233,6 +248,7 @@ export async function fetchVideos(
   const ctrl = new AbortController();
   const onAbort = () => ctrl.abort(opts.signal?.reason);
   opts.signal?.addEventListener("abort", onAbort, { once: true });
+  if (opts.signal?.aborted) onAbort(); // an aborted signal fires no more events
   const inner: ApiOptions = { ...opts, signal: ctrl.signal };
   const fetched = new Set<number>();
   let next = 0;
@@ -240,7 +256,7 @@ export async function fetchVideos(
   let fatal: unknown = null;
 
   const run = async () => {
-    while (!quotaExceeded && fatal === null && next < batches.length) {
+    while (!ctrl.signal.aborted && !quotaExceeded && fatal === null && next < batches.length) {
       const index = next++;
       try {
         const videos = await fetchVideoBatch(batches[index], inner);

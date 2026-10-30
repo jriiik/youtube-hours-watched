@@ -43,6 +43,15 @@ describe("IndexedDB cache", () => {
     expect(CACHE_MAX_AGE_MS).toBe(30 * DAY);
   });
 
+  it("expires records dated ahead, saved while the PC's clock was wrong", async () => {
+    const store = await openVideoStore();
+    await store.save([video("today000001", 0), video("soon0000001", -0.5), video("ahead000001", -60)]);
+    expect([...(await store.load(NOW)).keys()].sort()).toEqual(["soon0000001", "today000001"]);
+    store.close?.();
+    expect(await cacheStats(NOW)).toMatchObject({ videos: 2 }); // and deleted
+    expect([...(await memoryVideoStore([video("ahead000001", -60)]).load(NOW)).keys()]).toEqual([]);
+  });
+
   it("reports and clears what is saved", async () => {
     expect(await cacheStats(NOW)).toEqual({ videos: 0, oldestFetchedAt: null });
     const store = await openVideoStore();

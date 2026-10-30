@@ -149,7 +149,7 @@ function aggregateRows(rows: readonly Row[], firstDay: number, lastDay: number):
     }
     let v = videos.get(e.videoId);
     if (!v) videos.set(e.videoId, (v = { title: "", channel: "", times: 0, sec: 0, durationSec: 0 }));
-    v.times++;
+    if (!e.resumed) v.times++; // picking up where you left off isn't watching it again
     v.sec += e.est;
     if (e.title && !isUrl(e.title)) v.title = e.title;
     if (e.channel) v.channel = e.channel;
@@ -196,16 +196,11 @@ function aggregateRows(rows: readonly Row[], firstDay: number, lastDay: number):
     longestStreak = Math.max(longestStreak, streak);
     prev = day;
   }
-  let peakWeekday = 0;
-  let peakHour = 0;
-  for (let w = 0; w < 7; w++) {
-    for (let h = 0; h < 24; h++) {
-      if (heat[w][h] > heat[peakWeekday][peakHour]) {
-        peakWeekday = w;
-        peakHour = h;
-      }
-    }
-  }
+  // The weekday and the hour of the day with the most watch time, each on its own.
+  const weekdaySums = heat.map((row) => row.reduce((t, x) => t + x, 0));
+  const hourSums = heat[0].map((_, h) => heat.reduce((t, row) => t + row[h], 0));
+  const peakWeekday = weekdaySums.indexOf(Math.max(...weekdaySums));
+  const peakHour = hourSums.indexOf(Math.max(...hourSums));
   const days = lastDay - firstDay + 1;
 
   const summary: Summary = {

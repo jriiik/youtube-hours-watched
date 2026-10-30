@@ -20,16 +20,17 @@ const ZONES: Record<string, number> = {
   EET: 120, EEST: 180, OEZ: 120, OESZ: 180, MSK: 180,
   EST: -300, EDT: -240, CST: -360, CDT: -300, MST: -420, MDT: -360, PST: -480, PDT: -420,
   AKST: -540, AKDT: -480, HST: -600, AST: -240, ADT: -180, NST: -210, NDT: -150,
-  JST: 540, KST: 540, HKT: 480, SGT: 480, PHT: 480, WIB: 420, PKT: 300,
+  JST: 540, KST: 540, HKT: 480, SGT: 480, PHT: 480, MYT: 480, WIB: 420, PKT: 300,
   AEST: 600, AEDT: 660, ACST: 570, ACDT: 630, AWST: 480, NZST: 720, NZDT: 780,
   BRT: -180, ART: -180, SAST: 120, EAT: 180, WAT: 60,
+  "SEČ": 60, "SELČ": 120,
 };
 
-const OFFSET = /^(?:GMT|UTC|UT)?\s?([+\-\u2212\u2013])\s?(\d{1,2})(?::?(\d{2}))?$/i;
+const OFFSET = /^(?:GMT|UTC|UT|Гринуич)?\s?([+\-\u2212\u2013])\s?(\d{1,2})(?::?(\d{2}))?$/i;
 
 /** UTC offset in minutes for a zone label such as "CET", "GMT+02:00" or "UTC-3"; null if unknown. */
 export function zoneOffsetMinutes(label: string): number | null {
-  const key = label.trim().replace(/^\((.*)\)$/, "$1").trim();
+  const key = label.trim().replace(/^\((.*)\)$|^\[(.*)\]$/, "$1$2").trim();
   const named = ZONES[key.toUpperCase()];
   if (named !== undefined) return named;
   const m = OFFSET.exec(key);
@@ -58,7 +59,15 @@ const MONTH_PREFIXES: [string, number][] = [
   ["okt", 10], ["out", 10], ["ott", 10], ["paz", 10], ["eki", 10], ["окт", 10],
   ["lis", 11], ["kas", 11], ["ноя", 11],
   ["dez", 12], ["dic", 12], ["gru", 12], ["ara", 12], ["дек", 12],
+  // ro, et, fil, ms, sw, hu, nb, ca, af, sl
+  ["ian", 1], ["jaan", 1], ["veeb", 2], ["peb", 2], ["mac", 3],
+  ["iun", 6], ["juun", 6], ["hun", 6], ["iul", 7], ["juul", 7], ["hul", 7],
+  ["avg", 8], ["ogo", 8], ["szep", 9], ["nob", 11], ["des", 12], ["dets", 12], ["dis", 12],
 ];
+
+// Croatian writes "15. lis 2026." where lis is October; in Polish ("15 lis 2026") it is November.
+const HR_DATE = /^(\d{1,2})\. (\p{L}+) (\d{4})\.\s*$/u;
+const HR_MONTHS = ["sij", "velj", "ozu", "tra", "svi", "lip", "srp", "kol", "ruj", "lis", "stu", "pro"];
 
 const monthCache = new Map<string, number>();
 
@@ -67,8 +76,8 @@ export function monthFromWord(word: string): number {
   const cached = monthCache.get(word);
   if (cached !== undefined) return cached;
   const w = word.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/\.$/, "");
-  let month = 0;
-  if (w.length >= 3 && w.length <= 12) {
+  let month = w === "ag" ? 8 : 0; // Catalan "d’ag."
+  if (!month && w.length >= 3 && w.length <= 12) {
     for (const [prefix, m] of MONTH_PREFIXES) {
       if (w.startsWith(prefix)) {
         month = m;
@@ -85,8 +94,10 @@ const MARKS = /[\u200e\u200f\u061c]/g;
 const EN_GB = /^(\d{1,2}) ([A-Za-z]{3,9}) (\d{4}), (\d{1,2}):(\d{2}):(\d{2}) ([A-Za-z]{1,5})$/;
 const TIME = /(\d{1,2}):(\d{2})(?::(\d{2}))?(?:[.,]\d{1,3})?(?:\s?([AaPp])\.?\s?[Mm]\.?(?!\p{L}))?/u;
 const DATE_TOKENS = /\d+|\p{L}+/gu;
-const PM_WORDS = /오후|午後|下午/;
-const AM_WORDS = /오전|午前|上午/;
+// 12-hour markers other than a.m./p.m.: Korean, Japanese, Chinese (with the zh-TW day periods)
+// and Malay.
+const PM_WORDS = /오후|午後|下午|中午|傍晚|晚上|(?<!\p{L})PTG(?!\p{L})/u;
+const AM_WORDS = /오전|午前|上午|凌晨|清晨|早上|午夜|(?<!\p{L})PG(?!\p{L})/u;
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 const zoneCache = new Map<string, number | null>();
@@ -120,6 +131,12 @@ function build(y: number, mo: number, d: number, h: number, mi: number, s: numbe
 
 /** Year, month, day from the part before the time, or null when unreadable or ambiguous. */
 function parseDatePart(part: string): [number, number, number] | null {
+  const hr = HR_DATE.exec(part);
+  if (hr) {
+    const w = hr[2].toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+    const i = HR_MONTHS.findIndex((p) => w.startsWith(p));
+    if (i >= 0) return [Number(hr[3]), i + 1, Number(hr[1])];
+  }
   const tokens = part.match(DATE_TOKENS) ?? [];
   const nums: string[] = [];
   let month = 0;

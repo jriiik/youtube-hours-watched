@@ -1,5 +1,6 @@
 import { type FormEvent, type MouseEvent, useCallback, useEffect, useId, useRef, useState } from "react";
 import { cacheStats, clearCache } from "../../core/cache";
+import { cleanApiKey } from "../../core/settings";
 import type { ApiKeyProblem } from "../../core/types";
 import { testApiKey } from "../../core/youtubeApi";
 import { ExternalLink } from "../components/ExternalLink";
@@ -42,6 +43,8 @@ export function SettingsDialog({ apiKey, keyFromProxy, onSaveKey, onClose }: Set
   const [status, setStatus] = useState<KeyStatus>({ kind: "idle" });
   const [cache, setCache] = useState<CacheInfo>({ state: "loading" });
   const [clearing, setClearing] = useState(false);
+  /** The key test still running, if any: editing, saving or closing drops it. */
+  const testing = useRef<AbortController | null>(null);
   // Captured during the first render, before the dialog takes focus (an effect could run twice in dev).
   const [opener] = useState(() => (document.activeElement instanceof HTMLElement ? document.activeElement : null));
 
@@ -71,33 +74,49 @@ export function SettingsDialog({ apiKey, keyFromProxy, onSaveKey, onClose }: Set
     void refreshCache();
   }, [refreshCache]);
 
+  // A result that arrives after the dialog has closed is dropped, like one for an edited key.
+  const dropTest = () => {
+    testing.current?.abort();
+    testing.current = null;
+  };
+  useEffect(() => dropTest, []);
+
   const save = (e: FormEvent) => {
     e.preventDefault();
-    const key = draft.trim();
+    dropTest();
+    const key = cleanApiKey(draft);
     onSaveKey(key);
     setDraft(key);
     setStatus({ kind: "saved", removed: key === "" });
   };
 
   const test = async () => {
-    const key = draft.trim();
+    const key = cleanApiKey(draft);
     if (!key && !keyFromProxy) {
       setStatus({ kind: "empty" });
       inputRef.current?.focus();
       return;
     }
+    dropTest();
+    const run = new AbortController();
+    testing.current = run;
     setStatus({ kind: "testing" });
     try {
-      const res = await testApiKey(key);
+      const res = await testApiKey(key, { signal: run.signal });
+      if (run.signal.aborted) return;
       if (res.ok) {
         // A key that works is worth keeping without a second click.
         onSaveKey(key);
+        setDraft(key);
         setStatus({ kind: "ok" });
       } else {
         setStatus({ kind: "problem", reason: res.reason, message: res.message });
       }
     } catch (err) {
+      if (run.signal.aborted) return;
       setStatus({ kind: "problem", reason: "unknown", message: err instanceof Error ? err.message : String(err) });
+    } finally {
+      if (testing.current === run) testing.current = null;
     }
   };
 
@@ -120,7 +139,7 @@ export function SettingsDialog({ apiKey, keyFromProxy, onSaveKey, onClose }: Set
     pressedBackdrop.current = false;
   };
 
-  const dirty = draft.trim() !== apiKey;
+  const dirty = cleanApiKey(draft) !== apiKey;
 
   return (
     <dialog
@@ -166,6 +185,7 @@ export function SettingsDialog({ apiKey, keyFromProxy, onSaveKey, onClose }: Set
                 type={reveal ? "text" : "password"}
                 value={draft}
                 onChange={(e) => {
+                  dropTest();
                   setDraft(e.target.value);
                   setStatus({ kind: "idle" });
                 }}

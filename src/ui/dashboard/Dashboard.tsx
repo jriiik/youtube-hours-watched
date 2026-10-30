@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { DashboardData } from "../../core/types";
+import { Icon } from "../components/Icon";
 import { Categories } from "./Categories";
 import { DashboardFooter, DataNotes } from "./DataNotes";
 import { Heatmap } from "./Heatmap";
@@ -16,9 +17,11 @@ import "./lists.css";
 interface DashboardProps {
   data: DashboardData;
   warnings: string[];
+  /** Why the numbers are incomplete (the quota ran out part-way), shown above them. */
+  incomplete?: string;
 }
 
-export function Dashboard({ data, warnings }: DashboardProps) {
+export function Dashboard({ data, warnings, incomplete }: DashboardProps) {
   const [period, setPeriod] = useState("all");
   const [mode, setMode] = useState<Mode>("est");
   const periods = useMemo(() => ["all", ...data.years.filter((y) => y !== "all" && data.views[y])], [data]);
@@ -31,6 +34,14 @@ export function Dashboard({ data, warnings }: DashboardProps) {
         <h1 className="visually-hidden" tabIndex={-1}>
           Your YouTube watch time
         </h1>
+        {incomplete && (
+          <p className="dash-alert">
+            <Icon name="alert" size={18} />
+            <span>
+              <strong>These numbers are incomplete.</strong> {incomplete}
+            </span>
+          </p>
+        )}
         <Hero
           summary={view.summary}
           period={period}

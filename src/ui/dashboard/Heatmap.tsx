@@ -104,25 +104,27 @@ export function Heatmap({ heatmap, summary, period, isUb }: HeatmapProps) {
       <div className="hm-scroll">
         <div
           className="hm"
-          role="img"
+          role="application"
+          aria-roledescription="chart"
           aria-label={`${heatmapAria(summary, period)} Use the arrow keys to read each hour.`}
           tabIndex={0}
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={() => setActive(null)}
         >
+          {/* The label and the live region below say it all; the drawing itself stays out of the way. */}
           <div />
-          <div className="hm__hours">
+          <div className="hm__hours" aria-hidden="true">
             {HOUR_TICKS.map((h) => (
               <span key={h}>{h}</span>
             ))}
           </div>
-          <div className="hm__days">
+          <div className="hm__days" aria-hidden="true">
             {WEEKDAYS.map((d) => (
               <span key={d}>{d}</span>
             ))}
           </div>
-          <div ref={gridRef} className="hm__grid" onMouseMove={onMove} onMouseLeave={() => setActive(null)}>
+          <div ref={gridRef} className="hm__grid" aria-hidden="true" onMouseMove={onMove} onMouseLeave={() => setActive(null)}>
             {cells}
             {active && (
               <div

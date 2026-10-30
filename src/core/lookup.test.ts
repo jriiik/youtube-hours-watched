@@ -75,6 +75,19 @@ describe("lookupVideos", () => {
     expect(result.videos.size).toBe(50);
   });
 
+  it("stops with a quota error when no length at all is known", async () => {
+    const quota: FetchLike = async () => json(403, { error: { code: 403, message: "quota", errors: [{ reason: "quotaExceeded" }] } });
+    const ids = [fakeId(1), fakeId(2)];
+    const run = lookupVideos(ids, { apiKey: "k", store: memoryVideoStore(), fetch: quota, now: NOW });
+    await expect(run).rejects.toMatchObject({ reason: "quota" });
+
+    // With one length saved from an earlier run, the rest is shown as incomplete instead.
+    const store = memoryVideoStore();
+    await store.save([{ id: fakeId(1), durationSec: 60, categoryId: "10", live: "none", missing: false, fetchedAt: NOW }]);
+    const result = await lookupVideos(ids, { apiKey: "k", store, fetch: quota, now: NOW });
+    expect(result).toMatchObject({ quotaExceeded: true, fromCache: 1, fetched: 0, notLookedUp: 1 });
+  });
+
   it("turns key problems into AnalysisErrors", async () => {
     const fetch: FetchLike = async () =>
       json(403, { error: { code: 403, message: "Access Not Configured", errors: [{ reason: "accessNotConfigured" }] } });

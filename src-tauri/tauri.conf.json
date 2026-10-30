@@ -17,8 +17,8 @@
         "title": "YouTube Watch Stats",
         "width": 1280,
         "height": 860,
-        "minWidth": 960,
-        "minHeight": 640,
+        "minWidth": 720,
+        "minHeight": 400,
         "preventOverflow": true,
         "center": true,
         "resizable": true,
@@ -54,6 +54,11 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "wix": {
+        "upgradeCode": "d9039721-a983-53bf-8032-63f3f5dcbc96"
+      }
+    }
   }
 }

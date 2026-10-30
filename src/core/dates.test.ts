@@ -53,6 +53,23 @@ describe("parseTakeoutDate", () => {
     expect(parseTakeoutDate("30 Okt. 2026, 11:13:52 Uhr MEZ")?.offsetMin).toBe(60);
   });
 
+  it("reads layouts of more languages", () => {
+    // As CLDR writes them; not yet checked against real exports in these languages.
+    expect(parseTakeoutDate("15 Okt 2026, 8:05:09 PTG MYT")).toMatchObject({ localMs: local("2026-10-15T20:05:09"), offsetMin: 480, zoneUnknown: false });
+    expect(parseTakeoutDate("16 Okt 2026, 2:05:09 PG MYT")?.localMs).toBe(local("2026-10-16T02:05:09"));
+    expect(parseTakeoutDate("2026年10月15日 晚上8:05:09 [GMT+8]")).toMatchObject({ localMs: local("2026-10-15T20:05:09"), offsetMin: 480, zoneUnknown: false });
+    expect(parseTakeoutDate("2026年10月16日 凌晨12:05:09 [GMT+8]")?.localMs).toBe(local("2026-10-16T00:05:09"));
+    expect(parseTakeoutDate("2026年10月16日 中午12:05:09 [GMT+8]")?.localMs).toBe(local("2026-10-16T12:05:09"));
+    expect(parseTakeoutDate("15. lis 2026. 20:05:09 CEST")?.localMs).toBe(local("2026-10-15T20:05:09")); // Croatian: October
+    expect(parseTakeoutDate("15 lis 2026, 20:05:09 CET")?.localMs).toBe(local("2026-11-15T20:05:09")); // Polish: November
+    expect(parseTakeoutDate("15. 10. 2026 20:05:09 SELČ")).toMatchObject({ offsetMin: 120, zoneUnknown: false });
+    expect(parseTakeoutDate("15.10.2026 г., 21:05:09 ч. Гринуич+3")).toMatchObject({ localMs: local("2026-10-15T21:05:09"), offsetMin: 180, zoneUnknown: false });
+    expect(parseTakeoutDate("15. des. 2026, 07:05:09 CET")?.localMs).toBe(local("2026-12-15T07:05:09"));
+    expect(parseTakeoutDate("15 d’ag. 2026, 20:05:09 CEST")?.localMs).toBe(local("2026-08-15T20:05:09"));
+    expect(parseTakeoutDate("15. dets 2026, 08:05:09 GMT +2")).toMatchObject({ localMs: local("2026-12-15T08:05:09"), offsetMin: 120 });
+    expect(parseTakeoutDate("Dis 15, 2026, 2:05:09 PM GMT+8")?.localMs).toBe(local("2026-12-15T14:05:09"));
+  });
+
   it("treats an unknown zone label as UTC and flags it", () => {
     expect(parseTakeoutDate("30 Oct 2026, 11:13:52 XYZ")).toEqual({
       localMs: local("2026-10-30T11:13:52"),
@@ -105,5 +122,11 @@ describe("monthFromWord", () => {
     ]);
     expect(monthFromWord("de")).toBe(0);
     expect(monthFromWord("Uhr")).toBe(0);
+  });
+
+  it("knows the short month words of Romanian, Estonian, Filipino, Malay, Hungarian and Slovenian", () => {
+    expect(["ian.", "iun.", "iul.", "jaan", "veebr", "juuni", "juuli", "dets", "Peb", "Hun", "Hul", "Nob", "Dis", "Mac", "Ogo", "szept.", "avg."].map(monthFromWord)).toEqual([
+      1, 6, 7, 1, 2, 6, 7, 12, 2, 6, 7, 11, 12, 3, 8, 9, 8,
+    ]);
   });
 });

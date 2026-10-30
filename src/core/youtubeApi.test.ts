@@ -89,6 +89,17 @@ describe("fetchVideos", () => {
     expect(url.searchParams.get("fields")).toBe("items(id,contentDetails(duration),snippet(categoryId,liveBroadcastContent))");
   });
 
+  it("keeps replies out of the HTTP cache: their URLs list watched videos", async () => {
+    const caches: RequestCache[] = [];
+    const fetch: FetchLike = async (url, init) => {
+      caches.push(init.cache);
+      return fakeApi().fetch(url, init);
+    };
+    await fetchVideos([fakeId(1)], { apiKey: "k", fetch });
+    await testApiKey("k", { fetch });
+    expect(caches).toEqual(["no-store", "no-store"]);
+  });
+
   it("sends no key header when the key is empty (the sandbox proxy adds it)", async () => {
     const api = fakeApi();
     await fetchVideos([fakeId(1)], { apiKey: "", fetch: api.fetch });
@@ -189,6 +200,32 @@ describe("fetchVideos", () => {
     ctrl.abort();
     await expect(run).rejects.toMatchObject({ name: "AbortError" });
   });
+
+  it("looks nothing up once cancelled, even between requests", async () => {
+    const ids = Array.from({ length: 1000 }, (_, i) => fakeId(i));
+    const before = new AbortController();
+    before.abort();
+    const api = fakeApi();
+    await expect(fetchVideos(ids, { apiKey: "k", fetch: api.fetch, signal: before.signal })).rejects.toMatchObject({ name: "AbortError" });
+    expect(api.calls).toHaveLength(0);
+
+    // Cancelled while saving a batch: no request is in flight to notice it.
+    const during = new AbortController();
+    const later = fakeApi();
+    const run = fetchVideos(ids, { apiKey: "k", fetch: later.fetch, signal: during.signal, concurrency: 1, onBatch: () => during.abort() });
+    await expect(run).rejects.toMatchObject({ name: "AbortError" });
+    expect(later.calls).toHaveLength(1);
+  });
+
+  it("refuses a key with characters no key has, without sending it", async () => {
+    const api = fakeApi();
+    const sleeps: number[] = [];
+    const run = fetchVideos([fakeId(1)], { apiKey: "AIza\u2013abc", fetch: api.fetch, sleep: async (ms) => void sleeps.push(ms) });
+    await expect(run).rejects.toMatchObject({ reason: "invalid", message: expect.stringContaining("Copy the key again") });
+    expect(await testApiKey("AIza\u200babc", { fetch: api.fetch })).toMatchObject({ ok: false, reason: "invalid" });
+    expect(api.calls).toHaveLength(0);
+    expect(sleeps).toEqual([]);
+  });
 });
 
 describe("explainApiError", () => {
@@ -200,6 +237,9 @@ describe("explainApiError", () => {
       [403, googleError(403, "Access Not Configured.", { legacy: "accessNotConfigured" }), "api-not-enabled"],
       [403, googleError(403, "Requests to this API youtube.googleapis.com method are blocked.", { detail: "API_KEY_SERVICE_BLOCKED" }), "wrong-api"],
       [403, googleError(403, "Requests from referer <empty> are blocked.", { detail: "API_KEY_HTTP_REFERRER_BLOCKED" }), "referrer-blocked"],
+      [403, googleError(403, "The provided API key has an IP address restriction.", { detail: "API_KEY_IP_ADDRESS_BLOCKED" }), "referrer-blocked"],
+      [403, googleError(403, "Requests from this Android client application <empty> are blocked.", { detail: "API_KEY_ANDROID_APP_BLOCKED" }), "referrer-blocked"],
+      [403, googleError(403, "Requests from this iOS client application <empty> are blocked.", { detail: "API_KEY_IOS_APP_BLOCKED" }), "referrer-blocked"],
       [403, QUOTA, "quota"],
       [404, googleError(404, "Not <b>found</b>", { legacy: "notFound" }), "unknown"],
       [502, "<html>Bad gateway</html>", "unknown"],

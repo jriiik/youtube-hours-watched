@@ -33,8 +33,9 @@ export interface Summary {
   /** Share of the estimate watched between 22:00 and 04:00. */
   nightShare: number;
   weekendShare: number;
+  /** The weekday with the most watch time. */
   peakWeekday: Weekday;
-  /** 0-23 */
+  /** The hour of the day (0-23) with the most watch time, over all weekdays. */
   peakHour: number;
 }
 
@@ -112,6 +113,8 @@ export interface AnalyzeResult {
   data: DashboardData;
   /** Plain-language notes for the user, e.g. "674 videos are deleted or private". */
   warnings: string[];
+  /** Set when the numbers are incomplete (the quota ran out part-way): what happened and what to do. */
+  incomplete?: string;
 }
 
 export type ApiKeyProblem =

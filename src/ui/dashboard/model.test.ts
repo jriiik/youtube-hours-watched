@@ -133,9 +133,9 @@ describe("heatmap", () => {
     expect(heatmapModel([]).peakText).toBe("");
   });
 
-  it("writes the insight line", () => {
+  it("writes the insight line: the busiest weekday and hour, which need not meet in the top slot", () => {
     expect(insightText(all.summary)).toBe(
-      "You watch most on Saturdays, and most around 11 pm. 38% of your watch time is after 10 pm.",
+      "You watch most on Sundays, and most around 10 pm. 38% of your watch time is after 10 pm.",
     );
   });
 });

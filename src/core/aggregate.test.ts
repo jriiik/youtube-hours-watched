@@ -177,6 +177,41 @@ describe("buildDashboard", () => {
     ]);
   });
 
+  it("doesn't count picking up a long video where you left off as watching it again", () => {
+    const dashboard = buildDashboard(
+      estimate(
+        [
+          watch("2026-03-01T20:00:00", "film", ["UCa", "A"]),
+          watch("2026-03-01T21:00:00", "song", ["UCb", "B"]),
+          watch("2026-03-02T20:00:00", "film", ["UCa", "A"]), // the second hour of the film
+          watch("2026-03-02T21:00:00", "song", ["UCb", "B"]),
+        ],
+        { film: [7200, "1"], song: [200, "10"] },
+      ),
+    );
+    expect(dashboard.views.all.topVideos).toEqual([{ title: "Title of song", channel: "B", times: 2, durationSec: 200, hours: 0.1 }]);
+  });
+
+  it("finds the weekday and the hour with the most watch time, each on its own", () => {
+    // Each week: a 90-minute video late on Saturday (the busiest single slot), three hours on
+    // Sunday afternoon, and 20 minutes at 1 pm on weekdays.
+    const entries: WatchEntry[] = [];
+    const videos: Record<string, [number, string]> = {};
+    const add = (day: number, time: string, id: string, sec: number) => {
+      entries.push(watch(`${new Date(Date.UTC(2026, 0, day)).toISOString().slice(0, 10)}T${time}`, id, ["UCa", "A"]));
+      videos[id] = [sec, "20"];
+    };
+    for (let week = 0; week < 4; week++) {
+      const sat = 3 + 7 * week; // 3 January 2026 was a Saturday
+      add(sat, "23:00:00", `late${week}`, 5400);
+      for (const h of [13, 14, 15]) add(sat + 1, `${h}:00:00`, `sun${week}${h}`, 3600);
+      for (let d = 2; d <= 6; d++) add(sat + d, "13:00:00", `day${week}${d}`, 1200);
+    }
+    const view = buildDashboard(estimate(entries, videos)).views.all;
+    expect(view.heatmap[5][23]).toBe(Math.max(...view.heatmap.flat()));
+    expect(view.summary).toMatchObject({ peakWeekday: "Sun", peakHour: 13 });
+  });
+
   it("refuses an empty history", () => {
     expect(() => buildDashboard([])).toThrow(RangeError);
   });

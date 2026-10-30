@@ -6,6 +6,8 @@ const DB_NAME = "yws";
 const DB_VERSION = 1;
 const STORE = "videos";
 export const CACHE_MAX_AGE_MS = 30 * 24 * 3600 * 1000;
+/** Records dated more than a day ahead were saved while the PC's clock was wrong: expired too. */
+const CLOCK_SKEW_MS = 24 * 3600 * 1000;
 
 export interface CachedVideo {
   id: string;
@@ -28,7 +30,8 @@ export interface VideoStore {
 }
 
 function isFresh(v: CachedVideo, now: number): boolean {
-  return now - v.fetchedAt < CACHE_MAX_AGE_MS;
+  const age = now - v.fetchedAt;
+  return age < CACHE_MAX_AGE_MS && age > -CLOCK_SKEW_MS;
 }
 
 function request<T>(req: IDBRequest<T>): Promise<T> {
@@ -70,14 +73,19 @@ function openDb(): Promise<IDBDatabase> {
 
 async function deleteExpired(db: IDBDatabase, now: number): Promise<void> {
   const tx = db.transaction(STORE, "readwrite");
-  const cursorReq = tx.objectStore(STORE).index("fetchedAt").openCursor(IDBKeyRange.upperBound(now - CACHE_MAX_AGE_MS));
-  cursorReq.onsuccess = () => {
-    const cursor = cursorReq.result;
-    if (cursor) {
-      cursor.delete();
-      cursor.continue();
-    }
+  const index = tx.objectStore(STORE).index("fetchedAt");
+  const purge = (range: IDBKeyRange) => {
+    const cursorReq = index.openCursor(range);
+    cursorReq.onsuccess = () => {
+      const cursor = cursorReq.result;
+      if (cursor) {
+        cursor.delete();
+        cursor.continue();
+      }
+    };
   };
+  purge(IDBKeyRange.upperBound(now - CACHE_MAX_AGE_MS));
+  purge(IDBKeyRange.lowerBound(now + CLOCK_SKEW_MS));
   await completion(tx);
 }
 

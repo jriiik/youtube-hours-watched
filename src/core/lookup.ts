@@ -87,6 +87,13 @@ export async function lookupVideos(ids: readonly string[], opts: LookupOptions):
       if (err instanceof YouTubeApiError) throw new AnalysisError(err.reason, err.message);
       throw err;
     }
+    // With no length known at all, a dashboard would only show guesses.
+    if (quotaExceeded && notLookedUp === todo.length && fromCache === 0) {
+      throw new AnalysisError(
+        "quota",
+        "Your API key has no YouTube quota left today, so no video lengths could be looked up. The quota resets at midnight Pacific Time; try again after that.",
+      );
+    }
   }
   return {
     videos,

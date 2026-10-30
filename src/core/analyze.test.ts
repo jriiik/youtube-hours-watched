@@ -28,14 +28,15 @@ function stubYouTube(reply?: () => Response) {
 }
 
 // Newest first, as Takeout writes it. fakeId(3) is deleted.
-const HTML = takeoutHtml([
+const BLOCKS = [
   htmlEntry({ videoId: fakeId(5), title: "Five", channel: "Channel B", channelId: "UCb", date: "2 Jan 2026, 10:30:00 CET" }),
   htmlEntry({ videoId: fakeId(4), title: "Four", channel: "Channel B", channelId: "UCb", date: "2 Jan 2026, 10:29:00 CET" }),
   htmlEntry({ videoId: fakeId(1), title: "An ad", channel: "Advertiser", date: "2 Jan 2026, 10:28:00 CET", ad: true }),
   htmlEntry({ videoId: fakeId(3), channel: null, date: "2 Jan 2026, 10:00:00 CET" }),
   htmlEntry({ videoId: fakeId(2), title: "Two", channel: "Channel A", channelId: "UCa", date: "1 Jan 2026, 21:00:00 CET" }),
   htmlEntry({ videoId: fakeId(1), title: "One", channel: "Channel A", channelId: "UCa", date: "31 Dec 2025, 20:00:00 CET" }),
-]);
+];
+const HTML = takeoutHtml(BLOCKS);
 
 const file = () => new File([HTML], "watch-history.html", { type: "text/html" });
 
@@ -134,14 +135,25 @@ describe("analyzeHistory", () => {
     await expect(run).rejects.toMatchObject({ reason: "invalid", message: expect.stringContaining("API key") });
   });
 
-  it("finishes with what it has when the quota runs out", async () => {
+  it("stops with a quota error when the quota is used up and no length is known", async () => {
     stubYouTube(() =>
       json(403, { error: { code: 403, message: "quota <a href=\"#\">quota</a>", errors: [{ reason: "quotaExceeded" }] } }),
     );
-    const { data, warnings } = await analyzeHistory(file(), { apiKey: "k" });
-    expect(data.views.all.summary.unavailable.entries).toBe(5);
-    expect(warnings[0]).toMatch(/^Your API key has no YouTube quota left today, so 5 videos couldn't be looked up/);
-    expect(warnings.join(" ")).not.toContain("<");
+    await expect(analyzeHistory(file(), { apiKey: "k" })).rejects.toMatchObject({ reason: "quota", message: expect.not.stringContaining("<") });
+  });
+
+  it("finishes with what it has when the quota runs out, and says the numbers are incomplete", async () => {
+    stubYouTube();
+    await analyzeHistory(file(), { apiKey: "k" }); // saves the lengths of these five videos
+    stubYouTube(() =>
+      json(403, { error: { code: 403, message: "quota <a href=\"#\">quota</a>", errors: [{ reason: "quotaExceeded" }] } }),
+    );
+    const newer = htmlEntry({ videoId: fakeId(6), title: "Six", channel: "Channel B", channelId: "UCb", date: "3 Jan 2026, 09:00:00 CET" });
+    const { data, warnings, incomplete } = await analyzeHistory(new File([takeoutHtml([newer, ...BLOCKS])], "watch-history.html"), { apiKey: "k" });
+    expect(data.views.all.summary).toMatchObject({ entries: 6, unavailable: { entries: 2 } });
+    expect(incomplete).toMatch(/^Your API key has no YouTube quota left today, so 1 video couldn't be looked up and counts as unknown length for now\./);
+    expect(incomplete).not.toContain("<");
+    expect(warnings.join(" ")).not.toContain("quota");
   });
 
   it("explains histories it can't use", async () => {

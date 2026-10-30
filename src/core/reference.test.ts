@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildDashboard } from "./aggregate";
 import { memoryVideoStore } from "./cache";
 import type { CachedVideo } from "./cache";
-import { estimateEntries, sortByTime } from "./estimate";
+import { estimateEntries, historyInTimeOrder } from "./estimate";
 import type { EstimatedEntry, VideoInfo } from "./estimate";
 import type { ParsedHistory } from "./history";
 import { parseHtmlHistory } from "./parseHtml";
@@ -107,7 +107,7 @@ describe.skipIf(!historyPath || !derivedDir)("real watch history (local check)",
   it("gives every entry exactly the reference's estimate", async () => {
     const fs = await nodeFs();
     const lengths = new Map<string, VideoInfo>(records.map((r) => [r.id, { durationSec: r.durationSec, categoryId: r.categoryId }]));
-    estimated = estimateEntries(sortByTime(parsed.entries), lengths);
+    estimated = estimateEntries(historyInTimeOrder(parsed.entries), lengths);
     const path = `${derivedDir}/entries.jsonl`;
     if (!fs.existsSync(path)) return;
     const lines = fs.readFileSync(path, "utf8").split("\n").filter(Boolean);

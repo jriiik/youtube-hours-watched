@@ -2,7 +2,7 @@ import { buildDashboard } from "./aggregate";
 import { openVideoStore } from "./cache";
 import type { VideoStore } from "./cache";
 import { AnalysisError, throwIfAborted } from "./errors";
-import { estimateEntries, sortByTime, UNKNOWN_MAX_SEC } from "./estimate";
+import { estimateEntries, historyInTimeOrder, UNKNOWN_MAX_SEC } from "./estimate";
 import type { ParsedHistory } from "./history";
 import { readHistory } from "./input";
 import type { HistoryFile } from "./input";
@@ -36,26 +36,38 @@ function plural(n: number, one: string, many: string): string {
   return `${count(n)} ${n === 1 ? one : many}`;
 }
 
+/** Why the numbers are incomplete, for a banner above them: the quota ran out part-way. */
+export function incompleteNote(lookup: LookupResult): string | undefined {
+  if (!lookup.quotaExceeded) return undefined;
+  const n = lookup.notLookedUp;
+  const missed = plural(n, "video", "videos");
+  const counts = n === 1 ? "counts" : "count";
+  return (
+    (lookup.fetched
+      ? `Your API key ran out of today's YouTube quota after looking up ${count(lookup.fetched)} of ${count(lookup.fetched + n)} videos, so ${missed} ${counts} as unknown length for now.`
+      : `Your API key has no YouTube quota left today, so ${missed} couldn't be looked up and ${counts} as unknown length for now.`) +
+    " Run the analysis again after midnight Pacific Time to finish; lengths already looked up are saved."
+  );
+}
+
 /** Plain-language notes for the user, most important first. */
 export function buildWarnings(parsed: ParsedHistory, lookup: LookupResult, data: DashboardData): string[] {
   const warnings: string[] = [];
   const all = data.views.all.summary;
-  if (lookup.quotaExceeded) {
-    const missed = count(lookup.notLookedUp);
-    warnings.push(
-      (lookup.fetched
-        ? `Your API key ran out of today's YouTube quota after looking up ${count(lookup.fetched)} of ${count(lookup.fetched + lookup.notLookedUp)} videos. The other ${missed} count as unknown length for now.`
-        : `Your API key has no YouTube quota left today, so ${missed} videos couldn't be looked up and count as unknown length for now.`) +
-        " Run the analysis again after midnight Pacific Time to finish; lengths already looked up are saved.",
-    );
-  }
   if (parsed.skipped.unparsedDates) {
-    warnings.push(`${plural(parsed.skipped.unparsedDates, "video was", "videos were")} left out because the date couldn't be read.`);
+    warnings.push(
+      `${plural(parsed.skipped.unparsedDates, "video was", "videos were")} left out because the date couldn't be read.` +
+        (parsed.format === "html" ? " In Google Takeout, choose JSON as the format for YouTube history to include them." : ""),
+    );
   }
   const zones = Object.keys(parsed.unknownZones).map((z) => `"${z}"`);
   if (zones.length) {
+    // Times of day come from the clock times as written; the zone only matters for the time
+    // between videos, and a single unknown zone shifts every entry alike.
     const which = zones.length === 1 ? `time zone ${zones[0]} isn't` : `time zones ${listing(zones)} aren't`;
-    warnings.push(`The ${which} known, so those times are read as UTC. Totals aren't affected, but times of day may be off.`);
+    warnings.push(
+      `The ${which} known, so those times are read as UTC. Times of day are shown as written in your history; only the time between videos around a clock change may be slightly off.`,
+    );
   }
   const unknown = all.unavailable.entries;
   if (unknown) {
@@ -69,7 +81,7 @@ export function buildWarnings(parsed: ParsedHistory, lookup: LookupResult, data:
   const left = [
     ads ? plural(ads, "ad", "ads") : "",
     posts ? plural(posts, "community post", "community posts") : "",
-    other ? plural(other, "other activity", "other activities") : "",
+    other ? `${plural(other, "item", "items")} without a video link, such as survey answers and videos YouTube has removed` : "",
   ].filter(Boolean);
   if (left.length) warnings.push(`Not counted: ${listing(left)}.`);
   warnings.push(
@@ -116,8 +128,10 @@ export async function runAnalysis(file: HistoryFile, opts: AnalyzeOptions, deps:
 
   throwIfAborted(signal);
   report({ stage: "computing" });
-  const data = buildDashboard(estimateEntries(sortByTime(parsed.entries), lookup.videos));
+  const data = buildDashboard(estimateEntries(historyInTimeOrder(parsed.entries), lookup.videos));
   const result: AnalyzeResult = { data, warnings: buildWarnings(parsed, lookup, data) };
+  const incomplete = incompleteNote(lookup);
+  if (incomplete) result.incomplete = incomplete;
   report({ stage: "done" });
   return result;
 }

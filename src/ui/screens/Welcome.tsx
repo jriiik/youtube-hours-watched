@@ -32,11 +32,13 @@ export function Welcome({ keyState, showHowTo, onFile, onSample, onOpenSettings 
   const onFileRef = useRef(onFile);
   onFileRef.current = onFile;
 
-  // The whole window accepts a dropped file while this screen is open.
+  // The whole window accepts a dropped file while this screen is open, unless a dialog
+  // (Settings) is open over it.
   useEffect(() => {
     let depth = 0;
+    const modalOpen = () => document.querySelector("dialog[open]") !== null;
     const enter = (e: DragEvent) => {
-      if (!hasFiles(e)) return;
+      if (!hasFiles(e) || modalOpen()) return;
       e.preventDefault();
       depth += 1;
       setOver(true);
@@ -44,7 +46,8 @@ export function Welcome({ keyState, showHowTo, onFile, onSample, onOpenSettings 
     const overHandler = (e: DragEvent) => {
       if (!hasFiles(e)) return;
       e.preventDefault();
-      if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+      // "none" refuses the drop, and the pointer shows it.
+      if (e.dataTransfer) e.dataTransfer.dropEffect = modalOpen() ? "none" : "copy";
     };
     const leave = (e: DragEvent) => {
       if (!hasFiles(e)) return;
@@ -56,6 +59,7 @@ export function Welcome({ keyState, showHowTo, onFile, onSample, onOpenSettings 
       e.preventDefault();
       depth = 0;
       setOver(false);
+      if (modalOpen()) return;
       const file = pickFile(e.dataTransfer?.files);
       if (file) onFileRef.current(file);
     };

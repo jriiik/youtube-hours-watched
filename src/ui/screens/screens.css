@@ -393,6 +393,24 @@
   transition: width 300ms var(--ease-out);
 }
 
+/* Windows contrast themes would hide the fill, which is only a background colour, and the
+   backplate behind the tall percentage would cover the line above it. */
+@media (forced-colors: active) {
+  .progress {
+    border: 1px solid CanvasText;
+  }
+
+  .progress__fill {
+    forced-color-adjust: none;
+    background: Highlight;
+  }
+
+  .process__pct {
+    forced-color-adjust: none;
+    color: CanvasText;
+  }
+}
+
 .stage-list {
   list-style: none;
   margin: 0;

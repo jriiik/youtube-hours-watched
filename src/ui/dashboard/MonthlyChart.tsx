@@ -109,14 +109,16 @@ export function MonthlyChart({ monthly, isAll, mode, period }: MonthlyChartProps
       </div>
       <div
         className={classes.join(" ").trim()}
-        role="img"
+        role="application"
+        aria-roledescription="chart"
         aria-label={`${aria} Use the arrow keys to read each month.`}
         tabIndex={0}
         onKeyDown={onKeyDown}
         onFocus={onFocus}
         onBlur={() => setActive(-1)}
       >
-        <div className="mc__plot">
+        {/* The label and the live region below say it all; the drawing itself stays out of the way. */}
+        <div className="mc__plot" aria-hidden="true">
           {model.ticks.map((t) => (
             <div key={t.label} className="mc__tick" style={{ bottom: `${t.pct.toFixed(2)}%` }}>
               <span className="mc__tick-label">{t.label}</span>

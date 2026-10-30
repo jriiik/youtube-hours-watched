@@ -14,9 +14,10 @@ Want to look around first? Click **Try with sample data** on the start screen to
 Your history records when you opened each video, not how long you watched it. So the app estimates:
 
 - **Best estimate.** Each video counts from when you opened it until you moved on to the next one, but never for longer than the video itself. If you opened a 10-minute video and the next one 4 minutes later, it counts 4 minutes. The last video in your history counts in full.
-- **Long videos you come back to count once.** If you return to a video of 30 minutes or more within a week, the app treats it as picking up where you left off and only adds the part it hasn't counted yet. Once you've seen nearly all of it (95%), watching it again counts as a rewatch.
-- **If you finished every video.** The second number counts every video at its full length (at most 12 hours each), as if you had watched each one to the end. Think of it as the upper bound.
-- **Deleted and private videos.** YouTube no longer says how long these are, so their time is estimated from the timestamps alone: until the next video, but at most 10 minutes (5 for the very last one). They aren't part of the upper bound.
+- **Long videos you come back to count once.** If you return to a video of 30 minutes or more within a week, the app treats it as picking up where you left off: it only adds the part it hasn't counted yet, and it isn't a rewatch. Once you've seen nearly all of it (95%), watching it again counts as a rewatch.
+- **If you finished every video.** The second number counts every video at its full length, as if you had watched each one to the end. Think of it as the upper bound.
+- **At most 12 hours per video.** Videos longer than that are mostly recordings of round-the-clock live streams, some of them weeks long, so both numbers count at most 12 hours of each.
+- **Deleted and private videos.** YouTube no longer says how long these are, so their time is estimated from the timestamps alone: until the next video, but at most 10 minutes (5 for the very last one). They aren't part of the upper bound. Entries your history only lists as "a video that has been removed", without saying which video, aren't counted.
 
 Ads and posts in your history aren't counted. Videos you watched while signed out, in a private window or with watch history paused aren't in your history, so the app can't see them.
 
@@ -50,16 +51,16 @@ The free quota is 10,000 units a day. One request looks up 50 videos and costs 1
 GitHub Actions builds the installers whenever the code changes.
 
 1. Open the **Actions** tab of this repository on GitHub and click **Build Windows installers**.
-2. Open the latest run with a green check mark.
+2. Open the latest run on the **main** branch with a green check mark (type `branch:main` in the filter box). Runs on other branches are work in progress.
 3. Under **Artifacts**, download **YouTube-Watch-Stats-windows**. You need to be signed in to GitHub, and artifacts are usually kept for 90 days.
 4. Unzip it. It holds two installers for the same app:
    - `nsis/YouTube Watch Stats_0.1.0_x64-setup.exe` (recommended) installs it just for you and doesn't need administrator rights.
    - `msi/YouTube Watch Stats_0.1.0_x64_en-US.msi` installs it for everyone on the PC and asks for administrator rights.
-5. Run the installer. The builds aren't signed, so Windows SmartScreen may stop it with "Windows protected your PC" because it's an unrecognized app. Click **More info**, then **Run anyway**.
+5. Run the installer. The builds aren't signed, so Windows SmartScreen may stop it with "Windows protected your PC" because it's an unrecognized app. Click **More info**, then **Run anyway**. If Smart App Control is on (Windows Security → App & browser control), Windows blocks unsigned apps like this one and offers no Run anyway.
 
 The app needs 64-bit Windows 10 or 11. It uses Microsoft Edge WebView2, which comes with Windows 11 and up-to-date Windows 10; the installer downloads it if it's missing.
 
-To uninstall, go to **Settings → Apps → Installed apps**. The uninstaller of the setup.exe version has a **Delete the application data** box: tick it to remove your saved key and video lengths as well.
+To uninstall, go to **Settings → Apps → Installed apps**. The uninstaller of the setup.exe version has a **Delete the application data** box: tick it to remove your saved key and video lengths as well. The .msi version has no such box: before uninstalling it, open the app's settings, empty the key field and click **Save key**, then click **Clear saved lengths**. Or delete the folder `%LOCALAPPDATA%\io.github.jriiik.youtubewatchstats` afterwards.
 
 ## Privacy
 

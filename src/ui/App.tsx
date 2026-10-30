@@ -31,6 +31,8 @@ interface Loaded {
   id: number;
   data: DashboardData;
   warnings: string[];
+  /** Why the numbers are incomplete, if they are. */
+  incomplete?: string;
   badge: HeaderBadge;
 }
 
@@ -53,9 +55,14 @@ export default function App() {
   const keyState: KeyState = apiKey.trim() ? "saved" : KEY_FROM_PROXY ? "proxy" : "missing";
 
   // A file dropped outside the drop zone must never replace the app with the file itself.
+  // Only the start screen takes files; elsewhere the pointer shows that a drop does nothing.
+  const screenKind = useRef(screen.kind);
+  screenKind.current = screen.kind;
   useEffect(() => {
     const block = (e: DragEvent) => {
-      if (Array.from(e.dataTransfer?.types ?? []).includes("Files")) e.preventDefault();
+      if (!Array.from(e.dataTransfer?.types ?? []).includes("Files")) return;
+      e.preventDefault();
+      if (e.type === "dragover" && screenKind.current !== "welcome" && e.dataTransfer) e.dataTransfer.dropEffect = "none";
     };
     window.addEventListener("dragover", block);
     window.addEventListener("drop", block);
@@ -119,6 +126,7 @@ export default function App() {
           id,
           data: result.data,
           warnings: result.warnings ?? [],
+          incomplete: result.incomplete,
           badge: { kind: "file", fileName: file.name },
         });
         setScreen({ kind: "dashboard" });
@@ -209,7 +217,7 @@ export default function App() {
           Load another file
         </button>
       );
-      body = <Dashboard key={loaded.id} data={loaded.data} warnings={loaded.warnings} />;
+      body = <Dashboard key={loaded.id} data={loaded.data} warnings={loaded.warnings} incomplete={loaded.incomplete} />;
       break;
     case "error": {
       const file = screen.file;

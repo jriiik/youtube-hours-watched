@@ -282,3 +282,10 @@
 .vid-row--lead .vid-row__times {
   color: var(--accent);
 }
+
+/* Windows contrast themes would hide the bars, which are only a background colour. */
+@media (forced-colors: active) {
+  .bar-fill {
+    forced-color-adjust: none;
+  }
+}

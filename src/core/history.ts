@@ -70,7 +70,7 @@ export function isMusicUrl(url: string): boolean {
   return /^https?:\/\/music\.youtube\.com\//.test(url);
 }
 
-/** "From Google Ads" is translated, but the brand name stays the same in every language. */
+/** "From Google Ads" is translated, but the brand name stays the same, except in Japanese. */
 export function isAdMarker(text: string): boolean {
-  return text.includes("Google Ads");
+  return /Google\s?(?:Ads|広告)/.test(text);
 }
