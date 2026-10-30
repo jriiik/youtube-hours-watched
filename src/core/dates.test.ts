@@ -1,0 +1,109 @@
+import { describe, expect, it } from "vitest";
+import { monthFromWord, parseTakeoutDate, zoneOffsetMinutes } from "./dates";
+
+const local = (iso: string) => Date.parse(`${iso}Z`);
+
+describe("parseTakeoutDate", () => {
+  it("reads en-GB dates", () => {
+    expect(parseTakeoutDate("30 Oct 2026, 11:13:52 CET")).toEqual({
+      localMs: local("2026-10-30T11:13:52"),
+      offsetMin: 60,
+      zone: "CET",
+      zoneUnknown: false,
+    });
+    expect(parseTakeoutDate("1 Oct 2026, 00:00:01 CET")?.localMs).toBe(local("2026-10-01T00:00:01"));
+  });
+
+  it('reads "Sept" and other month spellings', () => {
+    expect(parseTakeoutDate("5 Sept 2025, 23:59:59 CEST")).toMatchObject({ localMs: local("2025-09-05T23:59:59"), offsetMin: 120 });
+    expect(parseTakeoutDate("5 Sep 2025, 23:59:59 CEST")?.localMs).toBe(local("2025-09-05T23:59:59"));
+    expect(parseTakeoutDate("5 September 2025, 08:00:00 GMT")?.localMs).toBe(local("2025-09-05T08:00:00"));
+    expect(parseTakeoutDate("12 June 2024, 08:00:00 BST")).toMatchObject({ localMs: local("2024-06-12T08:00:00"), offsetMin: 60 });
+  });
+
+  it("reads en-US dates with a 12-hour clock and any space before AM/PM", () => {
+    for (const space of [" ", "\u202f", "\u00a0"]) {
+      expect(parseTakeoutDate(`Oct 30, 2026, 11:13:52${space}AM EST`)).toEqual({
+        localMs: local("2026-10-30T11:13:52"),
+        offsetMin: -300,
+        zone: "EST",
+        zoneUnknown: false,
+      });
+      expect(parseTakeoutDate(`Oct 30, 2026, 1:02:03${space}PM PDT`)).toMatchObject({ localMs: local("2026-10-30T13:02:03"), offsetMin: -420 });
+    }
+    expect(parseTakeoutDate("Jan 1, 2026, 12:05:00\u202fAM PST")?.localMs).toBe(local("2026-01-01T00:05:00"));
+    expect(parseTakeoutDate("Jan 1, 2026, 12:05:00\u202fPM PST")?.localMs).toBe(local("2026-01-01T12:05:00"));
+    expect(parseTakeoutDate("Sep 9, 2026, 9:09:09 p.m. MST")?.localMs).toBe(local("2026-09-09T21:09:09"));
+  });
+
+  it("reads numeric offsets", () => {
+    expect(parseTakeoutDate("30 Oct 2026, 11:13:52 GMT+02:00")).toMatchObject({ offsetMin: 120, zone: "GMT+02:00", zoneUnknown: false });
+    expect(parseTakeoutDate("30 Oct 2026, 11:13:52 UTC+2")?.offsetMin).toBe(120);
+    expect(parseTakeoutDate("30 Oct 2026, 11:13:52 UTC\u22123")?.offsetMin).toBe(-180);
+    expect(parseTakeoutDate("30 Oct 2026, 11:13:52 GMT+5:30")?.offsetMin).toBe(330);
+    expect(parseTakeoutDate("30 Oct 2026, 11:13:52 GMT-0800")?.offsetMin).toBe(-480);
+  });
+
+  it("reads numeric and translated layouts", () => {
+    expect(parseTakeoutDate("30.10.2026, 11:13:52 MEZ")).toMatchObject({ localMs: local("2026-10-30T11:13:52"), offsetMin: 60 });
+    expect(parseTakeoutDate("2026/10/30 11:13:52 JST")).toMatchObject({ localMs: local("2026-10-30T11:13:52"), offsetMin: 540 });
+    expect(parseTakeoutDate("2026. 10. 30. 오후 1:13:52 KST")?.localMs).toBe(local("2026-10-30T13:13:52"));
+    expect(parseTakeoutDate("30 oct. 2026, 11:13:52 UTC+1")).toMatchObject({ localMs: local("2026-10-30T11:13:52"), offsetMin: 60 });
+    expect(parseTakeoutDate("30 de out. de 2026, 11:13:52 BRT")?.offsetMin).toBe(-180);
+    expect(parseTakeoutDate("30 Okt. 2026, 11:13:52 Uhr MEZ")?.offsetMin).toBe(60);
+  });
+
+  it("treats an unknown zone label as UTC and flags it", () => {
+    expect(parseTakeoutDate("30 Oct 2026, 11:13:52 XYZ")).toEqual({
+      localMs: local("2026-10-30T11:13:52"),
+      offsetMin: 0,
+      zone: "XYZ",
+      zoneUnknown: true,
+    });
+    expect(parseTakeoutDate("30 Oct 2026, 11:13:52")).toMatchObject({ offsetMin: 0, zone: "", zoneUnknown: false });
+  });
+
+  it("rejects what it can't read", () => {
+    expect(parseTakeoutDate("")).toBeNull();
+    expect(parseTakeoutDate("YouTube watch history")).toBeNull();
+    expect(parseTakeoutDate("31 Feb 2026, 11:13:52 CET")).toBeNull();
+    expect(parseTakeoutDate("29 Feb 2024, 11:13:52 CET")?.localMs).toBe(local("2024-02-29T11:13:52"));
+    expect(parseTakeoutDate("30 Oct 2026, 25:13:52 CET")).toBeNull();
+    expect(parseTakeoutDate("Oct 30, 2026, 13:13:52 PM EST")).toBeNull();
+    // Month and day order can't be told apart.
+    expect(parseTakeoutDate("10/11/2026, 11:13:52 CET")).toBeNull();
+  });
+});
+
+describe("zoneOffsetMinutes", () => {
+  it("maps the common abbreviations", () => {
+    const expected: Record<string, number> = {
+      UTC: 0, GMT: 0, WET: 0, WEST: 60, CET: 60, CEST: 120, EET: 120, EEST: 180, BST: 60, MSK: 180,
+      EST: -300, EDT: -240, CST: -360, CDT: -300, MST: -420, MDT: -360, PST: -480, PDT: -420,
+      AKST: -540, AKDT: -480, HST: -600, IST: 330, JST: 540, KST: 540, AEST: 600, AEDT: 660,
+      ACST: 570, ACDT: 630, AWST: 480, NZST: 720, NZDT: 780,
+    };
+    for (const [label, minutes] of Object.entries(expected)) expect({ label, minutes: zoneOffsetMinutes(label) }).toEqual({ label, minutes });
+  });
+
+  it("reads offsets and rejects nonsense", () => {
+    expect(zoneOffsetMinutes("GMT+01:00")).toBe(60);
+    expect(zoneOffsetMinutes("(UTC-03:30)")).toBe(-210);
+    expect(zoneOffsetMinutes("+0545")).toBe(345);
+    expect(zoneOffsetMinutes("GMT+25")).toBeNull();
+    expect(zoneOffsetMinutes("Mars Time")).toBeNull();
+  });
+});
+
+describe("monthFromWord", () => {
+  it("knows English and a few other languages", () => {
+    expect(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"].map(monthFromWord)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+    ]);
+    expect(["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."].map(monthFromWord)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+    ]);
+    expect(monthFromWord("de")).toBe(0);
+    expect(monthFromWord("Uhr")).toBe(0);
+  });
+});

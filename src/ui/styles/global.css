@@ -1,0 +1,276 @@
+/* "Night" palette (teal accent) and the primitives every screen shares. */
+:root {
+  color-scheme: dark;
+
+  --ground: #0b0e13;
+  --card: #12161d;
+  --raised: #161b23;
+  --logo-box: #151a22;
+  --inset: #0e1218;
+  --tooltip: #1b212b;
+  --track: #1a1f28;
+  --avatar: #1e2430;
+  --empty-cell: #161b23;
+
+  --hairline: #1c222c;
+  --card-border: #1f2530;
+  --grid-line: #1e242e;
+  --year-line: #2a3240;
+  --control-border: #262d39;
+  --border-strong: #2a313d;
+  --tooltip-border: #2c3442;
+  --switch-border: #222935;
+  --other-fill: #3b4352;
+  --dot: #4a5363;
+
+  --text: #eef1f6;
+  --text-strong: #f4f6f9;
+  --text-2: #dce1e9;
+  --text-3: #c9d0db;
+  --text-muted: #a3acba;
+  --text-faint: #8590a0;
+
+  --accent: #14b8a6;
+  --accent-ink: #0b0e13;
+  --accent-soft: rgba(20, 184, 166, 0.14);
+  --accent-wash: rgba(20, 184, 166, 0.06);
+  --link: #5eead4;
+  --link-hover: #99f6e4;
+  --ub: #afc8f7;
+  --ub-ghost: rgba(175, 200, 247, 0.2);
+  --ub-ghost-strong: rgba(175, 200, 247, 0.32);
+  --warn: #f2c14e;
+  --warn-soft: rgba(242, 193, 78, 0.12);
+  --focus: #afc8f7;
+
+  --font-ui: "Geist Variable", "Geist", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-num: "Bricolage Grotesque Variable", "Bricolage Grotesque", Bahnschrift, "Segoe UI", sans-serif;
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --shadow-panel: 0 30px 60px -30px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 30px 60px -36px rgba(0, 0, 0, 0.7);
+  --shadow-tip: 0 18px 40px -12px rgba(0, 0, 0, 0.75);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--link);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+summary:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Headings that receive focus after a screen change should not show a ring. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Page frame: same width and gutters as the design. */
+.page {
+  min-height: 100vh;
+  background: var(--ground);
+  color: var(--text);
+}
+
+.page__inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 32px) 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Buttons. The hover brightening is the design's "nb-btn". */
+.nb-btn {
+  transition:
+    filter 160ms ease,
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease;
+}
+
+.nb-btn:hover:not(:disabled) {
+  filter: brightness(1.22);
+}
+
+.btn {
+  height: 44px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--raised);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn svg {
+  flex: 0 0 auto;
+}
+
+.btn--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.btn--quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-3);
+}
+
+.btn--quiet:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  filter: none;
+}
+
+.btn:disabled {
+  cursor: default;
+  color: var(--text-faint);
+  border-color: var(--card-border);
+  background: var(--card);
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--control-border);
+  background: var(--card);
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+/* Cards and labels. */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+}
+
+.caps {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.soft-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-head__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.section-sub {
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

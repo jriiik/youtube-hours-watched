@@ -1,0 +1,196 @@
+.settings {
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 40px 80px -24px rgba(0, 0, 0, 0.8);
+  overflow: auto;
+}
+
+.settings::backdrop {
+  background: rgba(5, 7, 10, 0.72);
+}
+
+.settings__inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 16px 16px 24px;
+  background: var(--card);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.settings__title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.settings__section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.settings__section:last-child {
+  border-bottom: 0;
+}
+
+.settings__h {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.settings__text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-3);
+  text-wrap: pretty;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.key-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.key-field {
+  display: flex;
+  align-items: stretch;
+  height: 46px;
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+  background: var(--inset);
+  transition: border-color 160ms ease;
+}
+
+.key-field:focus-within {
+  border-color: var(--accent);
+}
+
+.key-field input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px 0 0 12px;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+}
+
+.key-field input::placeholder {
+  color: var(--text-faint);
+}
+
+/* The field's border shows focus, so the input itself does not need a second ring. */
+.key-field input:focus-visible {
+  outline: none;
+}
+
+.key-field__toggle {
+  width: 46px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-left: 1px solid var(--control-border);
+  border-radius: 0 11px 11px 0;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+.key-field__toggle:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.key-field__toggle:focus-visible {
+  outline-offset: -2px;
+}
+
+.key-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 21px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.key-status svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.key-status--ok {
+  color: var(--link);
+}
+
+.key-status--problem {
+  color: var(--warn);
+}
+
+.key-status--problem span {
+  color: var(--text-3);
+}
+
+.key-help summary {
+  width: fit-content;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--link);
+  cursor: pointer;
+}
+
+.key-help summary:hover {
+  color: var(--link-hover);
+}
+
+.key-help[open] summary {
+  margin-bottom: 12px;
+}
+
+.steps--compact li {
+  font-size: 13.5px;
+}
+
+.key-help__note {
+  margin-top: 12px;
+}
+
+.cache-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.cache-row .settings__text {
+  flex: 1 1 260px;
+}
