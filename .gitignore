@@ -1,0 +1,19 @@
+# Personal data: never commit
+Takeout/
+takeout-*.zip
+watch-history.*
+search-history.*
+
+# Dependencies, caches and build output
+node_modules/
+dist/
+target/
+.vite/
+.ruff_cache/
+
+# Local environment
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
