@@ -1,5 +1,5 @@
 [package]
-name = "youtube-watch-stats"
+name = "watch-time-stats"
 version = "0.1.0"
 description = "Estimates how much time you have spent watching YouTube, from your Google Takeout watch history"
 authors = ["jriiik"]
@@ -11,7 +11,7 @@ publish = false
 # The suffix keeps the library's output files from colliding with the binary's on Windows
 # (rust-lang/cargo#8519). Only an rlib: this is a desktop app, and the staticlib/cdylib
 # outputs Tauri's mobile targets need would each repeat the slow LTO step in CI.
-name = "youtube_watch_stats_lib"
+name = "watch_time_stats_lib"
 crate-type = ["rlib"]
 
 [build-dependencies]

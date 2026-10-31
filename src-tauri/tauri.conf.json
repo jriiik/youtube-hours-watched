@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "YouTube Watch Stats",
+  "productName": "Watch Time Stats",
   "version": "0.1.0",
   "identifier": "io.github.jriiik.youtubewatchstats",
   "build": {
@@ -14,7 +14,7 @@
       {
         "label": "main",
         "create": false,
-        "title": "YouTube Watch Stats",
+        "title": "Watch Time Stats",
         "width": 1280,
         "height": 860,
         "minWidth": 720,

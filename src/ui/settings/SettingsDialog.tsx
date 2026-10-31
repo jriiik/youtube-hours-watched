@@ -272,8 +272,8 @@ export function SettingsDialog({ apiKey, keyFromProxy, onSaveKey, onClose }: Set
             About
           </h3>
           <p className="settings__text">
-            YouTube Watch Stats estimates your watch time from your own Google Takeout history. Not affiliated with
-            YouTube or Google.
+            Watch Time Stats estimates your YouTube watch time from your own Google Takeout history. Not affiliated
+            with YouTube or Google.
           </p>
         </section>
       </div>

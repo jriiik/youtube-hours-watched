@@ -89,8 +89,8 @@ export function Welcome({ keyState, showHowTo, onFile, onSample, onOpenSettings 
           How much YouTube have you watched?
         </h1>
         <p className="welcome__lede">
-          Load the watch history from your Google Takeout export. YouTube Watch Stats adds up your watch time, finds
-          your longest binges and shows when you watch.
+          Load the watch history from your Google Takeout export. Watch Time Stats adds up your YouTube watch time,
+          finds your longest binges and shows when you watch.
         </p>
       </div>
 

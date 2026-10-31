@@ -1,4 +1,4 @@
-# YouTube Watch Stats
+# Watch Time Stats
 
 A Windows desktop app that estimates how much time you've spent watching YouTube, using the watch history from a Google Takeout export.
 
@@ -13,6 +13,7 @@ A Windows desktop app that estimates how much time you've spent watching YouTube
 
 ## Decisions so far
 
+- Name: Watch Time Stats. Google's YouTube API branding rules forbid "YouTube", "YT" or any variant in an app's name; descriptions may say it works with YouTube. The identifier `io.github.jriiik.youtubewatchstats` stays as it was: it names the app data folder, so saved data carries over.
 - Stack: Tauri 2 + TypeScript (web UI rendered by WebView2). Windows installers are built by GitHub Actions (`.github/workflows/build-windows.yml`).
 - Input: the Google Takeout watch history, `watch-history.html` (Takeout's default) or `watch-history.json`. Folder names are translated for non-English Google accounts, so find the file by its content, not its path.
 - Video lengths: YouTube Data API v3 `videos.list` with `part=contentDetails`, up to 50 IDs per call, 1 quota unit per call, 10,000 units per day. Deleted or private videos are missing from the response.

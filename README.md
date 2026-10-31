@@ -1,4 +1,4 @@
-# YouTube Watch Stats
+# Watch Time Stats
 
 A Windows app that estimates how much time you've spent watching YouTube, using the watch history in your Google Takeout export. It adds up your watch time, finds your longest binges and busiest days, and shows when you watch: month by month, by weekday and hour, with your top channels and most rewatched videos.
 
@@ -52,10 +52,10 @@ GitHub Actions builds the installers whenever the code changes.
 
 1. Open the **Actions** tab of this repository on GitHub and click **Build Windows installers**.
 2. Open the latest run on the **main** branch with a green check mark (type `branch:main` in the filter box). Runs on other branches are work in progress.
-3. Under **Artifacts**, download **YouTube-Watch-Stats-windows**. You need to be signed in to GitHub, and artifacts are usually kept for 90 days.
+3. Under **Artifacts**, download **Watch-Time-Stats-windows**. You need to be signed in to GitHub, and artifacts are usually kept for 90 days.
 4. Unzip it. It holds two installers for the same app:
-   - `nsis/YouTube Watch Stats_0.1.0_x64-setup.exe` (recommended) installs it just for you and doesn't need administrator rights.
-   - `msi/YouTube Watch Stats_0.1.0_x64_en-US.msi` installs it for everyone on the PC and asks for administrator rights.
+   - `nsis/Watch Time Stats_0.1.0_x64-setup.exe` (recommended) installs it just for you and doesn't need administrator rights.
+   - `msi/Watch Time Stats_0.1.0_x64_en-US.msi` installs it for everyone on the PC and asks for administrator rights.
 5. Run the installer. The builds aren't signed, so Windows SmartScreen may stop it with "Windows protected your PC" because it's an unrecognized app. Click **More info**, then **Run anyway**. If Smart App Control is on (Windows Security → App & browser control), Windows blocks unsigned apps like this one and offers no Run anyway.
 
 The app needs 64-bit Windows 10 or 11. It uses Microsoft Edge WebView2, which comes with Windows 11 and up-to-date Windows 10; the installer downloads it if it's missing.

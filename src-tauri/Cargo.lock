@@ -3779,6 +3779,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "watch-time-stats"
+version = "0.1.0"
+dependencies = [
+ "open",
+ "tauri",
+ "tauri-build",
+ "url",
+]
+
+[[package]]
 name = "web-sys"
 version = "0.3.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4254,16 +4264,6 @@ dependencies = [
  "quote",
  "syn 3.0.9",
  "synstructure",
-]
-
-[[package]]
-name = "youtube-watch-stats"
-version = "0.1.0"
-dependencies = [
- "open",
- "tauri",
- "tauri-build",
- "url",
 ]
 
 [[package]]

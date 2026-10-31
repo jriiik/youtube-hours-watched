@@ -19,7 +19,7 @@ export function AppHeader({ badge, actions, onOpenSettings, settingsRef }: AppHe
         <div className="app-header__logo">
           <Icon name="clock" />
         </div>
-        <div className="app-header__name">YouTube Watch Stats</div>
+        <div className="app-header__name">Watch Time Stats</div>
         {badge?.kind === "sample" && (
           <span className="app-header__badge">
             <span className="app-header__dot" />

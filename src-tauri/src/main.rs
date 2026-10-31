@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    youtube_watch_stats_lib::run();
+    watch_time_stats_lib::run();
 }
