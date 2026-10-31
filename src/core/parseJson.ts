@@ -1,5 +1,5 @@
 import { AnalysisError } from "./errors";
-import { emptySkipCounts, isAdMarker, isMusicUrl, isPostUrl, videoIdFromUrl } from "./history";
+import { emptySkipCounts, isAdMarker, isMusicUrl, isPostUrl, isSearchUrl, videoIdFromUrl } from "./history";
 import type { ParsedHistory, WatchEntry } from "./history";
 
 // watch-history.json: [{ header, title: "Watched <title>", titleUrl, subtitles: [{ name, url }],
@@ -63,6 +63,7 @@ export function parseJsonItems(items: unknown[]): ParsedHistory {
     const videoId = url ? videoIdFromUrl(url) : null;
     if (!videoId) {
       if (isPostUrl(url)) skipped.posts++;
+      else if (isSearchUrl(url)) skipped.searches++;
       else skipped.other++;
       continue;
     }

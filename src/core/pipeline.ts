@@ -77,10 +77,11 @@ export function buildWarnings(parsed: ParsedHistory, lookup: LookupResult, data:
         `${unknown === 1 ? "It counts" : "Each counts"} until the next video, at most ${UNKNOWN_MAX_SEC / 60} minutes.`,
     );
   }
-  const { ads, posts, other } = parsed.skipped;
+  const { ads, posts, searches, other } = parsed.skipped;
   const left = [
     ads ? plural(ads, "ad", "ads") : "",
     posts ? plural(posts, "community post", "community posts") : "",
+    searches ? plural(searches, "search", "searches") : "",
     other ? `${plural(other, "item", "items")} without a video link, such as survey answers and videos YouTube has removed` : "",
   ].filter(Boolean);
   if (left.length) warnings.push(`Not counted: ${listing(left)}.`);

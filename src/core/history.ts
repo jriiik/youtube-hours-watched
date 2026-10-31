@@ -24,7 +24,9 @@ export interface SkipCounts {
   ads: number;
   /** Community posts ("Viewed" entries). */
   posts: number;
-  /** Anything else without a video link: surveys, removed videos, searches... */
+  /** Searches, which My Activity exports list along with what was watched. */
+  searches: number;
+  /** Anything else without a video link: surveys, removed videos... */
   other: number;
   /** Videos whose date couldn't be read. */
   unparsedDates: number;
@@ -42,7 +44,7 @@ export interface ParsedHistory {
 }
 
 export function emptySkipCounts(): SkipCounts {
-  return { ads: 0, posts: 0, other: 0, unparsedDates: 0 };
+  return { ads: 0, posts: 0, searches: 0, other: 0, unparsedDates: 0 };
 }
 
 const ID = "([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])";
@@ -64,6 +66,11 @@ export function videoIdFromUrl(url: string): string | null {
 /** Community posts link to youtube.com/post/... */
 export function isPostUrl(url: string): boolean {
   return url.includes("/post/");
+}
+
+/** Searches link to youtube.com/results?search_query=... */
+export function isSearchUrl(url: string): boolean {
+  return /\/results\?(?:[^#]*&)?search_query=/.test(url);
 }
 
 export function isMusicUrl(url: string): boolean {

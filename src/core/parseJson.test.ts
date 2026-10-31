@@ -42,7 +42,7 @@ describe("parseJsonHistory", () => {
     });
     expect(parsed.entries[1]).toMatchObject({ channel: "", channelUrl: "", title: "https://www.youtube.com/watch?v=vid0000003a" });
     expect(parsed.entries[2]).toMatchObject({ music: true, title: "A song" });
-    expect(parsed.skipped).toEqual({ ads: 1, posts: 1, other: 1, unparsedDates: 1 });
+    expect(parsed.skipped).toEqual({ ads: 1, posts: 1, searches: 0, other: 1, unparsedDates: 1 });
   });
 
   it("removes a translated verb, learnt from a deleted video's title", () => {
@@ -58,6 +58,14 @@ describe("parseJsonHistory", () => {
       jsonEntry({ verb: "Vous avez regardé", videoId: fakeId(i), title: `Vidéo ${i}`, time: `2026-10-${String(i + 1).padStart(2, "0")}T10:00:00Z` }),
     );
     expect(parseJsonHistory(JSON.stringify(items)).entries.map((e) => e.title)).toEqual(items.map((_, i) => `Vidéo ${i}`));
+  });
+
+  it("counts searches, which My Activity exports list along with what was watched", () => {
+    const items = [
+      jsonEntry({ videoId: fakeId(1), time: "2026-10-30T10:00:00Z" }),
+      { header: "YouTube", title: "Searched for ftl guide", titleUrl: "https://www.youtube.com/results?search_query\u003dftl+guide", time: "2026-10-30T09:59:00Z", products: ["YouTube"] },
+    ];
+    expect(parseJsonHistory(JSON.stringify(items))).toMatchObject({ entries: [{ videoId: fakeId(1) }], skipped: { searches: 1, other: 0 } });
   });
 
   it("recognises ads in Japanese histories, where Google Ads is Google 広告", () => {

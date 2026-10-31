@@ -45,7 +45,18 @@ describe("parseHtmlHistory", () => {
   });
 
   it("counts what it skips", () => {
-    expect(parseHtmlHistory(sample).skipped).toEqual({ ads: 1, posts: 1, other: 1, unparsedDates: 0 });
+    expect(parseHtmlHistory(sample).skipped).toEqual({ ads: 1, posts: 1, searches: 0, other: 1, unparsedDates: 0 });
+  });
+
+  it("counts searches, which My Activity exports list along with what was watched", () => {
+    const parsed = parseHtmlHistory(
+      takeoutHtml([
+        htmlEntry({ videoId: "vid0000001a", date: "30 Oct 2026, 11:13:52 CET" }),
+        htmlEntry({ verb: "Searched for", href: "https://www.youtube.com/results?search_query=ftl+guide", title: "ftl guide", channel: null, date: "30 Oct 2026, 11:10:00 CET" }),
+      ]),
+    );
+    expect(parsed.entries.map((e) => e.videoId)).toEqual(["vid0000001a"]);
+    expect(parsed.skipped).toMatchObject({ searches: 1, other: 0 });
   });
 
   it("keeps one-link entries (deleted or private videos) without a channel", () => {

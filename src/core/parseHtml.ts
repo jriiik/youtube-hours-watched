@@ -1,5 +1,5 @@
 import { parseTakeoutDate } from "./dates";
-import { emptySkipCounts, isAdMarker, isMusicUrl, isPostUrl, videoIdFromUrl } from "./history";
+import { emptySkipCounts, isAdMarker, isMusicUrl, isPostUrl, isSearchUrl, videoIdFromUrl } from "./history";
 import type { ParsedHistory, SkipCounts, WatchEntry } from "./history";
 import { decodeEntities } from "./htmlEntities";
 
@@ -118,6 +118,7 @@ export class HtmlHistoryParser {
     const videoId = videoHref ? videoIdFromUrl(videoHref) : null;
     if (!videoId) {
       if (isPostUrl(videoHref)) this.skipped.posts++;
+      else if (isSearchUrl(videoHref)) this.skipped.searches++;
       else this.skipped.other++;
       return;
     }

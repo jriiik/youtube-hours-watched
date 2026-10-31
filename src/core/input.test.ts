@@ -51,6 +51,34 @@ describe("openHistorySource", () => {
     expect((await openHistorySource(new Blob([zip]))).format).toBe("json");
   });
 
+  it("finds My Activity's YouTube history, and takes the bigger history when both were exported", async () => {
+    const myActivity = takeoutJson([
+      jsonEntry({ videoId: fakeId(2), time: "2026-10-30T10:13:52Z" }),
+      { header: "YouTube", title: "Searched for ftl", titleUrl: "https://www.youtube.com/results?search_query=ftl", time: "2026-10-30T10:10:00Z" },
+      jsonEntry({ videoId: fakeId(1), time: "2017-10-04T20:17:00Z" }),
+    ]);
+    // Every product's activity file is called MyActivity; only YouTube's is a watch history.
+    const search = takeoutJson([{ header: "Search", title: "Searched for ftl", titleUrl: "https://www.google.com/search?q=ftl", time: "2026-10-30T10:00:00Z" }]);
+    const onlyMyActivity = zipSync({
+      "Takeout/My Activity/Search/MyActivity.json": bytes(search + " ".repeat(5000)),
+      "Takeout/My Activity/YouTube/MyActivity.json": bytes(myActivity),
+    });
+    expect(await openHistorySource(new Blob([onlyMyActivity]))).toMatchObject({ format: "json", name: "MyActivity.json" });
+    expect((await readHistory(new Blob([onlyMyActivity]))).parsed.entries.map((e) => e.videoId)).toEqual([fakeId(2), fakeId(1)]);
+
+    // Takeout's YouTube export can stop years short of My Activity's.
+    const both = zipSync({
+      "Takeout/My Activity/YouTube/MyActivity.json": bytes(myActivity),
+      "Takeout/YouTube and YouTube Music/history/watch-history.json": bytes(historyJson),
+    });
+    expect((await openHistorySource(new Blob([both]))).name).toBe("MyActivity.json");
+    const bigger = zipSync({
+      "Takeout/My Activity/YouTube/MyActivity.json": bytes(historyJson),
+      "Takeout/YouTube and YouTube Music/history/watch-history.json": bytes(myActivity),
+    });
+    expect((await openHistorySource(new Blob([bigger]))).name).toBe("watch-history.json");
+  });
+
   it("recognises translated file names by their content", async () => {
     const zip = zipSync({
       "Takeout/Fotos/Album/notes.html": bytes(historyHtml), // not in a YouTube folder: ignored

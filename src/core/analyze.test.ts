@@ -156,6 +156,19 @@ describe("analyzeHistory", () => {
     expect(warnings.join(" ")).not.toContain("quota");
   });
 
+  it("reads a My Activity export, where searches are listed along with what was watched", async () => {
+    stubYouTube();
+    const items = [
+      jsonEntry({ videoId: fakeId(2), title: "Two", channel: "Channel A", channelUrl: "https://www.youtube.com/channel/UCa", time: "2026-01-01T20:00:00Z" }),
+      { header: "YouTube", title: "Searched for something", titleUrl: "https://www.youtube.com/results?search_query=something", time: "2026-01-01T19:59:00Z" },
+      jsonEntry({ videoId: fakeId(1), title: "One", channel: "Channel A", channelUrl: "https://www.youtube.com/channel/UCa", time: "2017-10-04T20:00:00Z" }),
+    ];
+    const zip = zipSync({ "Takeout/My Activity/YouTube/MyActivity.json": bytes(takeoutJson(items)) });
+    const { data, warnings } = await analyzeHistory(new File([zip], "takeout-20261031T101010Z-001.zip"), { apiKey: "k" });
+    expect(data.years).toEqual(["2026", "2017"]);
+    expect(warnings).toContain("Not counted: 1 search.");
+  });
+
   it("explains histories it can't use", async () => {
     stubYouTube();
     const onlyAds = takeoutHtml([htmlEntry({ videoId: fakeId(1), date: "2 Jan 2026, 10:28:00 CET", ad: true })]);

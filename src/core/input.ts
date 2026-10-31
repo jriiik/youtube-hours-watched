@@ -22,6 +22,8 @@ const HEAD_BYTES = 1024;
 /** How much of a zip entry is decompressed to tell whether it is a watch history. */
 export const ZIP_SNIFF_BYTES = 1 << 20;
 const NAMED = /(^|\/)watch-history\.(html|json)$/i;
+/** My Activity exports call every product's file MyActivity; YouTube's is in a YouTube folder. */
+const MY_ACTIVITY = /(^|\/)MyActivity\.(html|json)$/i;
 const YOUTUBE_FOLDER = /(^|\/)[^/]*youtube[^/]*\//i;
 const HISTORY_FILE = /\.(html?|json)$/i;
 
@@ -54,9 +56,10 @@ async function readEntryHead(src: ByteSource, entry: ZipEntry, signal?: AbortSig
 }
 
 /**
- * Picks the watch history among a zip's entries: watch-history.html/.json by name (JSON first:
- * its times are exact), else, since folder and file names are translated, the biggest .html or
- * .json file in a YouTube folder whose first bytes look like one.
+ * Picks the watch history among a zip's entries: watch-history.html/.json, or My Activity's
+ * YouTube file, by name (JSON first: its times are exact; then the biggest, since Takeout's
+ * YouTube export can stop years short of My Activity's), else, since folder and file names are
+ * translated, the biggest .html or .json file in a YouTube folder whose first bytes look like one.
  */
 export async function findHistoryEntry(
   src: ByteSource,
@@ -65,10 +68,10 @@ export async function findHistoryEntry(
 ): Promise<{ entry: ZipEntry; format: HistoryFormat } | null> {
   const files = entries.filter((e) => !e.name.endsWith("/"));
   const isJson = (e: ZipEntry) => e.name.toLowerCase().endsWith(".json");
-  const named = files.filter((e) => NAMED.test(e.name));
+  const named = files.filter((e) => NAMED.test(e.name) || (MY_ACTIVITY.test(e.name) && YOUTUBE_FOLDER.test(e.name)));
   if (named.length) {
     const rank = (e: ZipEntry) => (isJson(e) ? 0 : 1) + (YOUTUBE_FOLDER.test(e.name) ? 0 : 2);
-    const entry = named.sort((a, b) => rank(a) - rank(b))[0];
+    const entry = named.sort((a, b) => rank(a) - rank(b) || b.size - a.size)[0];
     return { entry, format: isJson(entry) ? "json" : "html" };
   }
   const candidates = files
