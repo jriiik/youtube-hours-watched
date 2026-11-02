@@ -1,0 +1,155 @@
+name: Publish a release
+
+# Only by hand: Actions tab, "Publish a release", "Run workflow" on main.
+on:
+  workflow_dispatch:
+
+# One release at a time, and one that has started is never cancelled. The group must differ from
+# the one build-windows.yml gets when called from here ("Publish a release-refs/heads/main"):
+# equal groups would wait for each other, and GitHub would cancel the run.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    name: Check the version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check the branch
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Releases are only published from main, and this run is on $GITHUB_REF. Run the workflow on main."
+            exit 1
+          fi
+
+      - name: Check out
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Read the version
+        id: version
+        run: |
+          set -euo pipefail
+          package=$(node -p 'require("./package.json").version')
+          tauri=$(node -p 'require("./src-tauri/tauri.conf.json").version')
+          # The version line of Cargo.toml's [package] table.
+          cargo=$(awk '/^\[/ { table = $0 } table == "[package]" && /^version *=/ { split($0, part, "\""); print part[2]; exit }' src-tauri/Cargo.toml)
+          if [[ "$tauri" != "$package" || "$cargo" != "$package" ]]; then
+            echo "::error::The versions differ: package.json has $package, src-tauri/tauri.conf.json has $tauri and src-tauri/Cargo.toml has ${cargo:-none}."
+            exit 1
+          fi
+          notes=".github/release-notes/v$package.md"
+          if [[ ! -s "$notes" ]]; then
+            echo "::error::$notes is missing or empty. Write the release notes there first."
+            exit 1
+          fi
+          echo "version=$package" >> "$GITHUB_OUTPUT"
+
+      - name: Check that the version is new
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="v$VERSION"
+          # matching-refs matches by prefix, so look for the exact name.
+          refs=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$tag" --jq '.[].ref')
+          if grep -Fxq "refs/tags/$tag" <<<"$refs"; then
+            echo "::error::Tag $tag already exists. Raise the version for a new release."
+            exit 1
+          fi
+          # A read-only token doesn't see drafts; the publish job, which can write, checks those.
+          releases=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[].tag_name')
+          if grep -Fxq "$tag" <<<"$releases"; then
+            echo "::error::Release $tag already exists. Raise the version for a new release."
+            exit 1
+          fi
+
+  build:
+    needs: check
+    uses: ./.github/workflows/build-windows.yml
+
+  publish:
+    name: Publish the release
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+    steps:
+      # For the notes file.
+      - name: Check out
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Download the installers
+        uses: actions/download-artifact@v8
+        with:
+          name: Watch-Time-Stats-windows
+          path: ${{ runner.temp }}/bundle
+
+      - name: Rename the installers and write checksums
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          mkdir release
+          # Tauri's names have spaces, which GitHub would turn into dots.
+          move() {
+            if [[ ! -f "bundle/$1" ]]; then
+              echo "::error::The build has no $1."
+              exit 1
+            fi
+            mv "bundle/$1" "release/$2"
+          }
+          move "nsis/Watch Time Stats_${VERSION}_x64-setup.exe" "Watch-Time-Stats_${VERSION}_x64-setup.exe"
+          move "msi/Watch Time Stats_${VERSION}_x64_en-US.msi" "Watch-Time-Stats_${VERSION}_x64_en-US.msi"
+          cd release
+          sha256sum "Watch-Time-Stats_${VERSION}_x64-setup.exe" "Watch-Time-Stats_${VERSION}_x64_en-US.msi" > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="v$VERSION"
+          # A re-run of failed jobs skips the check job, and the tag may have been made while the
+          # installers were building. Publishing a release makes its tag, so this catches every published one.
+          refs=$(gh api "repos/$GH_REPO/git/matching-refs/tags/$tag" --jq '.[].ref')
+          if grep -Fxq "refs/tags/$tag" <<<"$refs"; then
+            echo "::error::Tag $tag already exists. Raise the version for a new release."
+            exit 1
+          fi
+          # This token can write, so it also sees drafts, such as one left by an earlier run.
+          drafts=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" --jq '.[] | select(.draft) | .tag_name')
+          if grep -Fxq "$tag" <<<"$drafts"; then
+            echo "::error::A draft release $tag exists, perhaps left by an earlier run. Delete it on the Releases page and run the workflow again."
+            exit 1
+          fi
+          cd "$RUNNER_TEMP/release"
+          # With files attached, gh makes a draft, uploads the files and only then publishes it,
+          # which creates the tag. A failed upload never leaves a half-finished public release.
+          gh release create "$tag" \
+            --target "$GITHUB_SHA" \
+            --title "Watch Time Stats $VERSION" \
+            --notes-file "$GITHUB_WORKSPACE/.github/release-notes/$tag.md" \
+            "Watch-Time-Stats_${VERSION}_x64-setup.exe" \
+            "Watch-Time-Stats_${VERSION}_x64_en-US.msi" \
+            SHA256SUMS.txt
