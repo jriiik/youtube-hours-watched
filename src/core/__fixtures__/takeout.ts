@@ -9,7 +9,7 @@ export interface HtmlEntryOptions {
   /** null: no channel link (deleted or private video). */
   channel?: string | null;
   channelId?: string;
-  /** As written, e.g. "30 Oct 2026, 11:13:52 CET". */
+  /** As written, e.g. "30 Oct 2026, 11:41:27 CET". */
   date: string;
   header?: string;
   verb?: string;

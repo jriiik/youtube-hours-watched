@@ -30,7 +30,7 @@ async function collect(chunks: AsyncIterable<Uint8Array>): Promise<Uint8Array> {
 /** A history big enough to span many read chunks. */
 function bigHistory(n: number): Uint8Array {
   const blocks = Array.from({ length: n }, (_, i) =>
-    htmlEntry({ videoId: fakeId(i), title: `Video number ${i}`, channel: `Channel ${i % 37}`, date: "30 Oct 2026, 11:13:52 CET" }),
+    htmlEntry({ videoId: fakeId(i), title: `Video number ${i}`, channel: `Channel ${i % 37}`, date: "30 Oct 2026, 11:41:27 CET" }),
   );
   return bytes(takeoutHtml(blocks));
 }

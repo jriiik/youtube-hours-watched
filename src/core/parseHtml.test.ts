@@ -10,7 +10,7 @@ const sample = takeoutHtml([
     title: "Tom &amp; Jerry&#39;s &quot;Best&quot; Bits",
     channel: "Cartoon &amp; Co  ",
     channelId: "UCcartoon",
-    date: "30 Oct 2026, 11:13:52 CET",
+    date: "30 Oct 2026, 11:41:27 CET",
   }),
   htmlEntry({ videoId: "vid0000002a", title: "An ad", channel: "Advertiser", date: "30 Oct 2026, 11:10:00 CET", ad: true }),
   htmlEntry({
@@ -39,8 +39,8 @@ describe("parseHtmlHistory", () => {
       channel: "Cartoon & Co",
       channelUrl: "https://www.youtube.com/channel/UCcartoon",
       music: false,
-      localMs: local("2026-10-30T11:13:52"),
-      utcMs: local("2026-10-30T10:13:52"),
+      localMs: local("2026-10-30T11:41:27"),
+      utcMs: local("2026-10-30T10:41:27"),
     });
   });
 
@@ -51,7 +51,7 @@ describe("parseHtmlHistory", () => {
   it("counts searches, which My Activity exports list along with what was watched", () => {
     const parsed = parseHtmlHistory(
       takeoutHtml([
-        htmlEntry({ videoId: "vid0000001a", date: "30 Oct 2026, 11:13:52 CET" }),
+        htmlEntry({ videoId: "vid0000001a", date: "30 Oct 2026, 11:41:27 CET" }),
         htmlEntry({ verb: "Searched for", href: "https://www.youtube.com/results?search_query=ftl+guide", title: "ftl guide", channel: null, date: "30 Oct 2026, 11:10:00 CET" }),
       ]),
     );
@@ -71,21 +71,21 @@ describe("parseHtmlHistory", () => {
   });
 
   it("does not depend on the English verb", () => {
-    const parsed = parseHtmlHistory(takeoutHtml([htmlEntry({ verb: "Angesehen", videoId: "vid0000001a", date: "30.10.2026, 11:13:52 MEZ" })]));
+    const parsed = parseHtmlHistory(takeoutHtml([htmlEntry({ verb: "Angesehen", videoId: "vid0000001a", date: "30.10.2026, 11:41:27 MEZ" })]));
     expect(parsed.entries).toHaveLength(1);
-    expect(parsed.entries[0].utcMs).toBe(local("2026-10-30T10:13:52"));
+    expect(parsed.entries[0].utcMs).toBe(local("2026-10-30T10:41:27"));
   });
 
   it("reads en-US dates with a narrow no-break space", () => {
-    const parsed = parseHtmlHistory(takeoutHtml([htmlEntry({ videoId: "vid0000001a", date: "Oct 30, 2026, 11:13:52\u202fPM EDT" })]));
-    expect(parsed.entries[0]).toMatchObject({ localMs: local("2026-10-30T23:13:52"), utcMs: local("2026-10-31T03:13:52") });
+    const parsed = parseHtmlHistory(takeoutHtml([htmlEntry({ videoId: "vid0000001a", date: "Oct 30, 2026, 11:41:27\u202fPM EDT" })]));
+    expect(parsed.entries[0]).toMatchObject({ localMs: local("2026-10-30T23:41:27"), utcMs: local("2026-10-31T03:41:27") });
   });
 
   it("counts unreadable dates and unknown zones", () => {
     const parsed = parseHtmlHistory(
       takeoutHtml([
         htmlEntry({ videoId: "vid0000001a", date: "sometime last week" }),
-        htmlEntry({ videoId: "vid0000002a", date: "30 Oct 2026, 11:13:52 XYZ" }),
+        htmlEntry({ videoId: "vid0000002a", date: "30 Oct 2026, 11:41:27 XYZ" }),
         htmlEntry({ videoId: "vid0000003a", date: "30 Oct 2026, 11:15:52 XYZ" }),
       ]),
     );
@@ -97,11 +97,11 @@ describe("parseHtmlHistory", () => {
   it("accepts other video link shapes", () => {
     const parsed = parseHtmlHistory(
       takeoutHtml([
-        htmlEntry({ href: "https://www.youtube.com/watch?app=desktop&amp;v=vid0000001a&amp;t=10s", date: "30 Oct 2026, 11:13:52 CET" }),
-        htmlEntry({ href: "https://youtu.be/vid0000002a", date: "30 Oct 2026, 11:13:52 CET" }),
-        htmlEntry({ href: "https://www.youtube.com/shorts/vid0000003a", date: "30 Oct 2026, 11:13:52 CET" }),
-        htmlEntry({ href: "https://www.youtube.com/watch?v=tooShort", date: "30 Oct 2026, 11:13:52 CET" }),
-        htmlEntry({ href: "https://www.youtube.com/watch?v=vid0000004aTooLong", date: "30 Oct 2026, 11:13:52 CET" }),
+        htmlEntry({ href: "https://www.youtube.com/watch?app=desktop&amp;v=vid0000001a&amp;t=10s", date: "30 Oct 2026, 11:41:27 CET" }),
+        htmlEntry({ href: "https://youtu.be/vid0000002a", date: "30 Oct 2026, 11:41:27 CET" }),
+        htmlEntry({ href: "https://www.youtube.com/shorts/vid0000003a", date: "30 Oct 2026, 11:41:27 CET" }),
+        htmlEntry({ href: "https://www.youtube.com/watch?v=tooShort", date: "30 Oct 2026, 11:41:27 CET" }),
+        htmlEntry({ href: "https://www.youtube.com/watch?v=vid0000004aTooLong", date: "30 Oct 2026, 11:41:27 CET" }),
       ]),
     );
     expect(parsed.entries.map((e) => e.videoId)).toEqual(["vid0000001a", "vid0000002a", "vid0000003a"]);

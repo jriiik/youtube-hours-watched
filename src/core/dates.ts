@@ -1,5 +1,5 @@
-// Dates as Takeout's watch-history.html writes them, e.g. "30 Oct 2026, 11:13:52 CET" (en-GB),
-// "Oct 30, 2026, 11:13:52 AM EST" (en-US) or "30.10.2026, 11:13:52 GMT+01:00".
+// Dates as Takeout's watch-history.html writes them, e.g. "30 Oct 2026, 11:41:27 CET" (en-GB),
+// "Oct 30, 2026, 11:41:27 AM EST" (en-US) or "30.10.2026, 11:41:27 GMT+01:00".
 
 export interface TakeoutDate {
   /** The wall-clock time as written, in ms, encoded as if it were UTC. */

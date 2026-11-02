@@ -10,7 +10,7 @@ const localOf = (utcMs: number) => {
 
 describe("parseJsonHistory", () => {
   const text = takeoutJson([
-    jsonEntry({ videoId: "vid0000001a", title: "First video", channel: " A channel ", time: "2026-10-30T10:13:52.123Z" }),
+    jsonEntry({ videoId: "vid0000001a", title: "First video", channel: " A channel ", time: "2026-10-30T10:41:27.123Z" }),
     jsonEntry({ videoId: "vid0000002a", title: "An ad", time: "2026-10-30T10:10:00Z", ad: true }),
     jsonEntry({ verb: "Viewed", titleUrl: "https://www.youtube.com/post/UgkxInvented", title: "A post", time: "2026-10-29T10:00:00Z" }),
     jsonEntry({ titleUrl: null, time: "2026-10-29T09:00:00Z", channel: null }),
@@ -30,7 +30,7 @@ describe("parseJsonHistory", () => {
     expect(parsed.format).toBe("json");
     expect(parsed.items).toBe(7);
     expect(parsed.entries.map((e) => e.videoId)).toEqual(["vid0000001a", "vid0000003a", "vid0000004a"]);
-    const utcMs = Date.parse("2026-10-30T10:13:52.123Z");
+    const utcMs = Date.parse("2026-10-30T10:41:27.123Z");
     expect(parsed.entries[0]).toEqual({
       videoId: "vid0000001a",
       title: "First video",

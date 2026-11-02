@@ -5,15 +5,15 @@ import { openHistorySource, readHistory, sniffWatchHistory } from "./input";
 import type { Progress } from "./types";
 
 const historyHtml = takeoutHtml([
-  htmlEntry({ videoId: fakeId(2), date: "30 Oct 2026, 11:13:52 CET" }),
+  htmlEntry({ videoId: fakeId(2), date: "30 Oct 2026, 11:41:27 CET" }),
   htmlEntry({ videoId: fakeId(1), date: "30 Oct 2026, 11:03:52 CET" }),
 ]);
 const searchHtml = takeoutHtml(
   Array.from({ length: 400 }, (_, i) =>
-    htmlEntry({ verb: "Searched for", href: `https://www.youtube.com/results?search_query=query+${i}`, title: `query ${i}`, channel: null, date: "30 Oct 2026, 11:13:52 CET" }),
+    htmlEntry({ verb: "Searched for", href: `https://www.youtube.com/results?search_query=query+${i}`, title: `query ${i}`, channel: null, date: "30 Oct 2026, 11:41:27 CET" }),
   ),
 );
-const historyJson = takeoutJson([jsonEntry({ videoId: fakeId(1), time: "2026-10-30T10:13:52Z" })]);
+const historyJson = takeoutJson([jsonEntry({ videoId: fakeId(1), time: "2026-10-30T10:41:27Z" })]);
 
 describe("sniffWatchHistory", () => {
   it("recognises watch histories, not search histories", () => {
@@ -53,7 +53,7 @@ describe("openHistorySource", () => {
 
   it("finds My Activity's YouTube history, and takes the bigger history when both were exported", async () => {
     const myActivity = takeoutJson([
-      jsonEntry({ videoId: fakeId(2), time: "2026-10-30T10:13:52Z" }),
+      jsonEntry({ videoId: fakeId(2), time: "2026-10-30T10:41:27Z" }),
       { header: "YouTube", title: "Searched for ftl", titleUrl: "https://www.youtube.com/results?search_query=ftl", time: "2026-10-30T10:10:00Z" },
       jsonEntry({ videoId: fakeId(1), time: "2017-10-04T20:17:00Z" }),
     ]);
