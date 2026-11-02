@@ -13,7 +13,7 @@ import type {
 export const DASHBOARD_LABEL = "Your watch history";
 const WEEKDAYS: Weekday[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_MS = 86_400_000;
-/** Entries less than 30 minutes apart belong to the same session (for the longest binge). */
+/** Entries at most 30 minutes apart belong to the same session (for the longest binge). */
 const SESSION_BREAK_SEC = 1800;
 const TOP_CHANNELS = 8;
 const TOP_VIDEOS = 6;
@@ -165,7 +165,7 @@ function aggregateRows(rows: readonly Row[], firstDay: number, lastDay: number):
     }
   }
 
-  // Longest binge: a run of entries less than 30 minutes apart. A run still going at the
+  // Longest binge: a run of entries at most 30 minutes apart. A run still going at the
   // end of the period (a year view) ends there.
   let best = { sec: 0, start: -1, videos: 0 };
   let cur = { sec: 0, start: -1, videos: 0 };

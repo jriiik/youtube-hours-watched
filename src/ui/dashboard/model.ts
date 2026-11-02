@@ -254,7 +254,7 @@ export function heatmapAria(s: Summary, period: string): string {
 }
 
 export function insightText(s: Summary): string {
-  return `You watch most on ${weekdayPlural(s.peakWeekday)}, and most around ${hourLabel(s.peakHour)}. ${Math.round(s.nightShare * 100)}% of your watch time is after 10 pm.`;
+  return `You watch most on ${weekdayPlural(s.peakWeekday)}, and most around ${hourLabel(s.peakHour)}. ${Math.round(s.nightShare * 100)}% of your watch time is between 10 pm and 4 am.`;
 }
 
 // ---- Lists -------------------------------------------------------------------
