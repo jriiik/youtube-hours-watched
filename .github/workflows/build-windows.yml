@@ -6,8 +6,12 @@ on:
       - main
       - "claude/**"
   workflow_dispatch:
+  # release.yml calls this workflow, so a release gets the same tests and build as every push.
+  workflow_call:
 
-# A newer push to the same branch makes a running build pointless.
+# A newer push to the same branch makes a running build pointless. In a called workflow,
+# github.workflow is the caller's name, so a release's build has a group of its own
+# ("Publish a release-refs/heads/main") and no push can cancel it.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

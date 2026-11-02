@@ -60,7 +60,7 @@ export function Hero({ summary, period, periods, mode, onPeriod, onMode }: HeroP
         <p className="hero__note">
           {isUb
             ? "Counts every video at its full length (at most 12 hours), as if you watched each one to the end."
-            : "Counts each video until you moved on to the next one, never longer than the video."}
+            : "Counts each video until you moved on to the next one, never longer than the video (at most 12 hours)."}
         </p>
       </div>
 

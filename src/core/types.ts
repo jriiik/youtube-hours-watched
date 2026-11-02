@@ -5,9 +5,9 @@
 export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 
 export interface Summary {
-  /** Best estimate: each video counts until the next entry, never longer than the video. */
+  /** Best estimate: each video counts until the next entry, never longer than the video (at most 12 hours). */
   estimateHours: number;
-  /** If every video had been watched to the end. */
+  /** If every video had been watched to the end, each counted at most 12 hours. */
   upperBoundHours: number;
   /** Videos watched (history entries counted; ads and posts excluded). */
   entries: number;
@@ -21,7 +21,7 @@ export interface Summary {
   activeDays: number;
   /** estimateHours spread over `days`, in minutes. */
   avgMinutesPerDay: number;
-  /** Longest run of entries less than 30 minutes apart. */
+  /** Longest run of entries at most 30 minutes apart. */
   longestBinge: { minutes: number; date: string; videos: number };
   busiestDay: { minutes: number; date: string };
   longestStreakDays: number;

@@ -1,7 +1,7 @@
 import { IDBFactory } from "fake-indexeddb";
 import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { CACHE_MAX_AGE_MS, cacheStats, clearCache, memoryVideoStore, openVideoStore } from "./cache";
+import { CACHE_MAX_AGE_MS, cacheStats, clearCache, deleteExpiredVideos, memoryVideoStore, openVideoStore } from "./cache";
 import type { CachedVideo } from "./cache";
 
 const NOW = Date.UTC(2026, 9, 30, 12);
@@ -15,6 +15,26 @@ const video = (id: string, ageDays: number, extra: Partial<CachedVideo> = {}): C
   fetchedAt: NOW - ageDays * DAY,
   ...extra,
 });
+
+/** Opens the cache's database directly, not through cache.ts. */
+const openRaw = (version?: number) =>
+  new Promise<IDBDatabase>((resolve, reject) => {
+    const req = indexedDB.open("yws", version);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+
+/** The IDs saved on disk. Reads through cache.ts delete expired records first, so this one goes around it. */
+async function savedIds(): Promise<string[]> {
+  const db = await openRaw();
+  const ids = await new Promise<string[]>((resolve, reject) => {
+    const req = db.transaction("videos").objectStore("videos").getAllKeys();
+    req.onsuccess = () => resolve(req.result as string[]);
+    req.onerror = () => reject(req.error);
+  });
+  db.close();
+  return ids;
+}
 
 describe("IndexedDB cache", () => {
   beforeEach(() => {
@@ -52,6 +72,28 @@ describe("IndexedDB cache", () => {
     expect([...(await memoryVideoStore([video("ahead000001", -60)]).load(NOW)).keys()]).toEqual([]);
   });
 
+  it("deletes expired records when the app starts, keeping fresh ones", async () => {
+    const store = await openVideoStore();
+    await store.save([
+      video("fresh000001", 29),
+      video("today000001", 0),
+      video("soon0000001", -0.5),
+      video("expired0001", 30),
+      video("expired0002", 400),
+      video("ahead000001", -1),
+      video("ahead000002", -60),
+    ]);
+    store.close?.();
+    // Twice at once, as React's StrictMode runs effects in development.
+    await Promise.all([deleteExpiredVideos(NOW), deleteExpiredVideos(NOW)]);
+    expect(await savedIds()).toEqual(["fresh000001", "soon0000001", "today000001"]);
+  });
+
+  it("does nothing when the database can't be opened", async () => {
+    (await openRaw(2)).close(); // upgraded by a newer version of the app
+    await expect(deleteExpiredVideos(NOW)).resolves.toBeUndefined();
+  });
+
   it("reports and clears what is saved", async () => {
     expect(await cacheStats(NOW)).toEqual({ videos: 0, oldestFetchedAt: null });
     const store = await openVideoStore();
@@ -78,6 +120,7 @@ describe("without IndexedDB", () => {
     expect((await store.load(NOW)).size).toBe(1);
     expect(await cacheStats(NOW)).toEqual({ videos: 0, oldestFetchedAt: null });
     await expect(clearCache()).resolves.toBeUndefined();
+    await expect(deleteExpiredVideos(NOW)).resolves.toBeUndefined();
   });
 });
 

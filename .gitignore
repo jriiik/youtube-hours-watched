@@ -3,6 +3,8 @@ Takeout/
 takeout-*.zip
 watch-history.*
 search-history.*
+My Activity/
+MyActivity.*
 
 # Dependencies, caches and build output
 node_modules/

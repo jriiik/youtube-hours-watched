@@ -1,6 +1,6 @@
 // Video lengths saved between runs (IndexedDB "yws", store "videos"). YouTube API policy:
 // stored API data must be refreshed or deleted within 30 days, so older records are deleted
-// whenever the cache is opened and their videos are looked up again.
+// when the app starts and whenever the cache is read, and their videos are looked up again.
 
 const DB_NAME = "yws";
 const DB_VERSION = 1;
@@ -151,6 +151,15 @@ export async function cacheStats(now = Date.now()): Promise<{ videos: number; ol
     });
   } catch {
     return { videos: 0, oldestFetchedAt: null };
+  }
+}
+
+/** Deletes expired records. The app calls it when it starts, so they don't wait for the next analysis. */
+export async function deleteExpiredVideos(now = Date.now()): Promise<void> {
+  try {
+    await withDb((db) => deleteExpired(db, now));
+  } catch {
+    // Without IndexedDB nothing is saved. Otherwise the next analysis or Settings deletes them.
   }
 }
 

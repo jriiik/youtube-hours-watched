@@ -1,5 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { analyzeHistory } from "../core/analyze";
+import { deleteExpiredVideos } from "../core/cache";
 import { loadApiKey, saveApiKey } from "../core/settings";
 import type { DashboardData, Progress, Stage } from "../core/types";
 import { AppHeader, type HeaderBadge } from "./components/AppHeader";
@@ -53,6 +54,12 @@ export default function App() {
 
   const hasKey = apiKey.trim() !== "" || KEY_FROM_PROXY;
   const keyState: KeyState = apiKey.trim() ? "saved" : KEY_FROM_PROXY ? "proxy" : "missing";
+
+  // Delete saved video lengths older than YouTube allows when the app starts, not only when an analysis runs.
+  // Nothing waits for it and it never fails; a second run (StrictMode in development) finds nothing left.
+  useEffect(() => {
+    void deleteExpiredVideos();
+  }, []);
 
   // A file dropped outside the drop zone must never replace the app with the file itself.
   // Only the start screen takes files; elsewhere the pointer shows that a drop does nothing.
