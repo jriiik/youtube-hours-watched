@@ -1,0 +1,5 @@
+# Cargo build output
+/target/
+
+# Written by tauri-build on every build (capability schemas for editor completion)
+/gen/schemas

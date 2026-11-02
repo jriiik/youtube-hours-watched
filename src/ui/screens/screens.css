@@ -1,0 +1,545 @@
+/* Welcome, processing and error screens: the Night card language outside the dashboard. */
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.muted {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+.tile {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: var(--logo-box);
+  border: 1px solid var(--control-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.tile--warn {
+  background: var(--warn-soft);
+  border-color: rgba(242, 193, 78, 0.28);
+  color: var(--warn);
+}
+
+/* ---- Welcome ------------------------------------------------------------------ */
+
+.welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 24px;
+}
+
+.welcome__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.welcome__title {
+  font-size: clamp(30px, 3.6vw, 44px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--text-strong);
+  text-wrap: balance;
+}
+
+.welcome__lede {
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-3);
+  text-wrap: pretty;
+}
+
+.welcome__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .welcome__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.welcome__main,
+.welcome__side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 320px;
+  padding: 40px 28px;
+  text-align: center;
+  background: var(--card);
+  border: 1.5px dashed #2e3644;
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.dropzone--over {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.dropzone .tile {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+}
+
+.dropzone__title {
+  max-width: 30ch;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.dropzone__title code {
+  font-family: inherit;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+.dropzone__or {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.howto summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px 20px;
+  border-radius: 18px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.howto summary::-webkit-details-marker {
+  display: none;
+}
+
+.howto summary:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.howto__chevron {
+  color: var(--text-faint);
+  transition: transform 200ms ease;
+}
+
+.howto[open] .howto__chevron {
+  transform: rotate(180deg);
+}
+
+.howto__hint {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-faint);
+  text-align: right;
+}
+
+@media (max-width: 520px) {
+  .howto__hint {
+    display: none;
+  }
+}
+
+/* Small disclosure toggles ("Technical details", "How to get a free key") share one chevron. */
+.disclosure > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
+}
+
+.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure > summary svg {
+  transition: transform 200ms ease;
+}
+
+.disclosure[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.howto__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 20px 20px;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  counter-reset: step;
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: baseline;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-3);
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--avatar);
+  border: 1px solid var(--border-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  align-self: start;
+}
+
+.steps strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.side-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 22px;
+}
+
+.side-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.side-card .tile {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.side-card__title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.side-card__text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-3);
+  text-wrap: pretty;
+}
+
+.privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.privacy svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+/* ---- Processing and error cards -------------------------------------------------- */
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: clamp(24px, 8vh, 96px) 0 24px;
+}
+
+.status-card {
+  width: min(640px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: clamp(22px, 3vw, 32px);
+  box-shadow: var(--shadow-panel);
+}
+
+.status-card__file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.status-card__file span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.process__figure {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.process__pct {
+  font-family: var(--font-num);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: 96px;
+  line-height: 0.8;
+  letter-spacing: -0.03em;
+  color: var(--text-strong);
+  min-width: 2.2ch;
+}
+
+.process__pct small {
+  font-size: 0.45em;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--accent);
+  margin-left: 4px;
+}
+
+.process__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-bottom: 2px;
+}
+
+/* Always one line tall, so the bar below does not move when the note appears. */
+.process__note {
+  min-height: 20px;
+  font-size: 13.5px;
+  line-height: 20px;
+  color: var(--text-muted);
+}
+
+.process__headline {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.progress {
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--track);
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: width 300ms var(--ease-out);
+}
+
+/* Windows contrast themes would hide the fill, which is only a background colour, and the
+   backplate behind the tall percentage would cover the line above it. */
+@media (forced-colors: active) {
+  .progress {
+    border: 1px solid CanvasText;
+  }
+
+  .progress__fill {
+    forced-color-adjust: none;
+    background: Highlight;
+  }
+
+  .process__pct {
+    forced-color-adjust: none;
+    color: CanvasText;
+  }
+}
+
+.stage-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--hairline);
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 14px;
+  color: var(--text-faint);
+}
+
+.stage--active {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.stage--done {
+  color: var(--text-3);
+}
+
+.stage__mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage--pending .stage__mark::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+.stage--done .stage__mark {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.stage--active .stage__mark {
+  border: 2px solid var(--track);
+  border-top-color: var(--accent);
+  animation: spin 900ms linear infinite;
+}
+
+.stage__detail {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-card__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.status-card__foot .muted {
+  flex: 1 1 260px;
+}
+
+.error-card__head {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.error-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.error-card__title {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.error-card__body {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-3);
+  text-wrap: pretty;
+}
+
+.tech {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.tech summary {
+  width: fit-content;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tech pre {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--inset);
+  border: 1px solid var(--switch-border);
+  color: var(--text-muted);
+  font: 12.5px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

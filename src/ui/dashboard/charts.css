@@ -1,0 +1,395 @@
+/* "Watch time over time" bars and the "When you watch" heatmap. */
+
+.monthly {
+  padding: 24px 24px 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.monthly__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.legend__swatch--ub {
+  background: var(--ub);
+}
+
+.mc {
+  margin-top: 30px;
+  padding: 0 0 30px 46px;
+  border-radius: 8px;
+}
+
+.mc:focus-visible {
+  outline-offset: 6px;
+}
+
+.mc__plot {
+  position: relative;
+  height: 250px;
+}
+
+.mc__tick {
+  position: absolute;
+  left: -46px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(50%);
+}
+
+.mc__tick-label {
+  width: 38px;
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.mc__tick-line {
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--grid-line);
+}
+
+.mc__bars {
+  --gap: 3px;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  gap: var(--gap);
+}
+
+.mc__col {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.mc__hover {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.mc__year-line {
+  position: absolute;
+  top: -8px;
+  bottom: -28px;
+  /* Centred in the gap before the bar: -2px with the design's 3px gap. */
+  left: calc(var(--gap) / -2 - 0.5px);
+  width: 1px;
+  background: var(--year-line);
+}
+
+.mc__stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.mc--months .mc__stack {
+  max-width: 44px;
+}
+
+.mc__ub,
+.mc__est {
+  position: absolute;
+  bottom: 0;
+  border-radius: 3px 3px 0 0;
+}
+
+.mc__ub {
+  left: 0;
+  right: 0;
+  background: var(--ub-ghost);
+  transition:
+    height 420ms var(--ease-out),
+    background-color 240ms ease;
+}
+
+.mc__est {
+  left: 0;
+  right: 0;
+  background: var(--accent);
+  transition:
+    height 420ms var(--ease-out),
+    left 240ms ease,
+    right 240ms ease;
+}
+
+.mc--ub .mc__ub {
+  background: var(--ub);
+}
+
+.mc--ub .mc__est {
+  left: 30%;
+  right: 30%;
+}
+
+.mc__label {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.mc--months .mc__label {
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--text-faint);
+}
+
+.mc__tip {
+  position: absolute;
+  top: -14px;
+  z-index: 3;
+  pointer-events: none;
+  min-width: 200px;
+  padding: 12px 14px;
+  background: var(--tooltip);
+  border: 1px solid var(--tooltip-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-tip);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mc__tip-month {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.tip-row__swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.tip-row__swatch--ub {
+  background: var(--ub);
+}
+
+.tip-row__name {
+  flex: 1 1 auto;
+}
+
+.tip-row__val {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mc__tip-n {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ---- Heatmap and categories row ------------------------------------------------ */
+
+.duo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.when {
+  flex: 7 1 620px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+}
+
+.hm-scroll {
+  overflow-x: auto;
+  padding: 4px 2px 2px;
+}
+
+.hm {
+  min-width: 600px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 8px 10px;
+  border-radius: 6px;
+}
+
+.hm:focus-visible {
+  outline-offset: 4px;
+}
+
+.hm__hours {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 3px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.hm__days {
+  display: grid;
+  grid-template-rows: repeat(7, 24px);
+  row-gap: 3px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.hm__grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hm__row {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.hm__cell {
+  height: 24px;
+  border-radius: 4px;
+  transition: background-color 320ms ease;
+}
+
+.hm__ring {
+  position: absolute;
+  height: 24px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--text);
+  pointer-events: none;
+}
+
+.hm__tip {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  padding: 8px 12px;
+  background: var(--tooltip);
+  border: 1px solid var(--tooltip-border);
+  border-radius: 10px;
+  box-shadow: 0 14px 30px -10px rgba(0, 0, 0, 0.75);
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.hm__tip-when {
+  color: var(--text-3);
+}
+
+.hm__tip-val {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.hm-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.hm-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hm-legend__swatches {
+  display: flex;
+  gap: 3px;
+}
+
+.hm-legend__swatch {
+  width: 18px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.insight {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-3);
+  text-wrap: pretty;
+}
+
+.insight svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+/* Windows contrast themes replace background colours, which is all the chart marks are made
+   of: keep their own colours, and outline the hovered cell with a system colour. */
+@media (forced-colors: active) {
+  .mc__ub,
+  .mc__est,
+  .hm__cell,
+  .hm-legend__swatch,
+  .legend__swatch,
+  .tip-row__swatch {
+    forced-color-adjust: none;
+  }
+
+  .hm__ring {
+    outline: 2px solid Highlight;
+  }
+}

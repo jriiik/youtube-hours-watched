@@ -1,0 +1,6 @@
+# The same line endings on every OS, so tests with multi-line fixtures behave the same on the
+# Windows build machine as everywhere else.
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.icns binary

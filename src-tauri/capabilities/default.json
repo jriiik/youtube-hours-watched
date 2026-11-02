@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The main window. The page uses no Tauri APIs (files are read with the browser's File API and the YouTube API is called with fetch), so it gets only Tauri's default core set.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}
